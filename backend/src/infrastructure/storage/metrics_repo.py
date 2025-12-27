@@ -1,12 +1,14 @@
 """
-Metrics Repository - Infrastructure Layer
+Metrics Repository Implementation - Infrastructure Layer
 
-In-memory storage for calculated tactical metrics.
+Concrete implementation of MetricsRepository port (in-memory for development).
 """
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 import numpy as np
 from datetime import datetime
+
+from src.domain.ports.metrics_repository import MetricsRepository as MetricsRepositoryPort
 
 
 @dataclass
@@ -42,9 +44,9 @@ class StoredPPDA:
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-class MetricsRepository:
+class MetricsRepository(MetricsRepositoryPort):
     """
-    Repository for storing and retrieving tactical metrics.
+    Concrete implementation of MetricsRepository port.
     Currently in-memory implementation for development.
     """
     
