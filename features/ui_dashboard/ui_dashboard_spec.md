@@ -1,26 +1,38 @@
 # ✨ Feature Specification: UI Dashboard & Reporting
 
-> **Context:** This is the main specification document for the UI Dashboard feature. For detailed component specifications, see the individual spec files listed below.
+> **Context:** This is the main specification document for the UI Dashboard feature. For detailed component specifications, see the enumerated spec folders listed below.
 
-## 📑 Modular Specifications
+## 📑 Component Specifications (Implementation Order)
 
-The UI Dashboard has been divided into the following component specifications:
+The UI Dashboard is divided into 6 enumerated components. Follow the numbering for implementation order:
 
-### Core Infrastructure
+### 01. [Dashboard Infrastructure](./01_dashboard_infrastructure/01_dashboard_infrastructure_spec.md)
 
-- **[Dashboard Infrastructure](./dashboard_infrastructure_spec.md)** - Foundation (Next.js, routing, state management, API client, design system)
+**Foundation** - Next.js setup, routing, state management (Zustand), API client, design system (Shadcn/UI)
 
-### UI Components
+### 02. [Video Player](./02_video_player/02_video_player_spec.md)
 
-- **[Video Player](./video_player_spec.md)** - Video playback with drawing overlay
-- **[Pitch Visualization](./pitch_visualization_spec.md)** - Interactive 2D pitch view with heatmaps
-- **[Metrics Dashboard](./metrics_dashboard_spec.md)** - Time-series charts and statistics
-- **[Chat Interface](./chat_interface_spec.md)** - AI-powered match analysis chat
-- **[Reporting](./reporting_spec.md)** - PDF report generation
+**Core Component** - Video playback with React Player, drawing overlay canvas, timestamp synchronization
+
+### 03. [Pitch Visualization](./03_pitch_visualization/03_pitch_visualization_spec.md)
+
+**Visual Analysis** - Interactive 2D pitch view, player tracking dots, heatmaps, Voronoi diagrams
+
+### 04. [Metrics Dashboard](./04_metrics_dashboard/04_metrics_dashboard_spec.md)
+
+**Statistics** - Time-series charts (Recharts), PPDA/Speed/Distance graphs, filtering by period/player
+
+### 05. [Chat Interface](./05_chat_interface/05_chat_interface_spec.md)
+
+**AI Integration** - AI-powered match analysis chat, job polling, message history
+
+### 06. [Reporting](./06_reporting/06_reporting_spec.md)
+
+**Export** - PDF report generation with charts, tables, and AI summaries
 
 ---
 
-## 1. � Overview & Motivation
+## 1. 🚀 Overview & Motivation
 
 - **Feature Name:** Analyst Dashboard (Next.js/React)
 - **Goal:** Provide a high-performance, interactive, and aesthetically premium web interface for match analysis.
@@ -31,17 +43,17 @@ The UI Dashboard has been divided into the following component specifications:
 ## 2. 🏗️ Architecture Overview
 
 ```
-┌─────────────────────────────────────────┐
-│         Dashboard Infrastructure         │
-│  (Next.js, Zustand, TanStack Query)     │
-└───────────┬─────────────────────────────┘
-            │
-    ┌───────┴────────┬────────────┬────────────┬──────────┐
-    │                │            │            │          │
-┌───▼────┐  ┌───▼────┐  ┌───▼────┐  ┌───▼────┐  ┌───▼────┐
-│ Video  │  │ Pitch  │  │Metrics │  │  Chat  │  │Report  │
-│ Player │  │  View  │  │ Charts │  │Interface│  │Generator│
-└────────┘  └────────┘  └────────┘  └────────┘  └────────┘
+┌──────────────────────────────────────┐
+│   01. Dashboard Infrastructure       │
+│   (Next.js, Zustand, TanStack Query) │
+└────────────┬─────────────────────────┘
+             │
+    ┌────────┴─────┬─────────┬─────────┬─────────┐
+    │              │         │         │         │
+┌───▼────┐  ┌──▼──┐  ┌──▼──┐  ┌──▼──┐  ┌───▼───┐
+│02.Video│  │03.  │  │04.  │  │05.  │  │06.    │
+│ Player │  │Pitch│  │Metrics│ │Chat │  │Report │
+└────────┘  └─────┘  └──────┘  └─────┘  └───────┘
 ```
 
 ---
@@ -64,21 +76,49 @@ The UI Dashboard has been divided into the following component specifications:
 
 ---
 
-## 4. ✅ Getting Started
+## 4. 📁 Folder Structure
 
-To implement this feature, follow these steps:
+Each spec has its own folder where you can add implementation plans:
 
-1. **Start with Infrastructure:** Implement [Dashboard Infrastructure](./dashboard_infrastructure_spec.md) first
-2. **Build Components in Order:**
-   - [Video Player](./video_player_spec.md) - Core playback
-   - [Pitch Visualization](./pitch_visualization_spec.md) - Sync with video
-   - [Metrics Dashboard](./metrics_dashboard_spec.md) - Data display
-   - [Chat Interface](./chat_interface_spec.md) - AI integration
-   - [Reporting](./reporting_spec.md) - Export functionality
+```
+features/ui_dashboard/
+├── ui_dashboard_spec.md (this file)
+├── 01_dashboard_infrastructure/
+│   ├── 01_dashboard_infrastructure_spec.md
+│   └── (future: plan.md)
+├── 02_video_player/
+│   ├── 02_video_player_spec.md
+│   └── (future: plan.md)
+├── 03_pitch_visualization/
+│   ├── 03_pitch_visualization_spec.md
+│   └── (future: plan.md)
+├── 04_metrics_dashboard/
+│   ├── 04_metrics_dashboard_spec.md
+│   └── (future: plan.md)
+├── 05_chat_interface/
+│   ├── 05_chat_interface_spec.md
+│   └── (future: plan.md)
+└── 06_reporting/
+    ├── 06_reporting_spec.md
+    └── (future: plan.md)
+```
 
 ---
 
-## 5. 🔗 References
+## 5. ✅ Getting Started
+
+**Follow the numbered order (01 → 06):**
+
+1. Start with **01_dashboard_infrastructure** - This establishes the foundation
+2. Build **02_video_player** - Core playback functionality
+3. Add **03_pitch_visualization** - Sync with video
+4. Implement **04_metrics_dashboard** - Statistical analysis
+5. Integrate **05_chat_interface** - AI capabilities
+6. Complete **06_reporting** - Export functionality
+
+---
+
+## 6. 🔗 References
 
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Shadcn/UI](https://ui.shadcn.com/)
