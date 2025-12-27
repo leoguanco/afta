@@ -34,6 +34,7 @@
 | Data Ingestion    | 🟢 Implemented | [features/data_ingestion/data_ingestion_plan.md](features/data_ingestion/data_ingestion_plan.md)             |
 | Object Tracking   | 🟢 Implemented | [features/object_tracking/object_tracking_plan.md](features/object_tracking/object_tracking_plan.md)         |
 | Pitch Calibration | 🟢 Implemented | [features/pitch_calibration/pitch_calibration_plan.md](features/pitch_calibration/pitch_calibration_plan.md) |
+| Tactical Metrics  | 🟢 Implemented | [features/tactical_metrics/tactical_metrics_plan.md](features/tactical_metrics/tactical_metrics_plan.md)     |
 
 ---
 
