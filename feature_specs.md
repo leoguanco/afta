@@ -27,11 +27,12 @@
 
 ---
 
-## � Implementation Plans
+## Implementation Plans
 
-| Feature        | Status     | Link                                                         |
-| :------------- | :--------- | :----------------------------------------------------------- |
-| Data Ingestion | 🟡 Planned | [plans/data_ingestion_plan.md](plans/data_ingestion_plan.md) |
+| Feature         | Status         | Link                                                           |
+| :-------------- | :------------- | :------------------------------------------------------------- |
+| Data Ingestion  | � Implemented  | [plans/data_ingestion_plan.md](plans/data_ingestion_plan.md)   |
+| Object Tracking | 🟢 Implemented | [plans/object_tracking_plan.md](plans/object_tracking_plan.md) |
 
 ---
 
