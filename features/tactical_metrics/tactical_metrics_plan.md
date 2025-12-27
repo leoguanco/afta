@@ -20,7 +20,7 @@ This plan details the implementation of the Tactical Domain Model as specified i
 
 Implementation of core mathematical models and tactical logic.
 
-#### [NEW] [pitch_control.py](file:///d:/Workspace/afta/backend/src/domain/services/pitch_control.py)
+#### [NEW] [pitch_control.py](../../backend/src/domain/services/pitch_control.py)
 
 - Implement `PitchControlService`.
 - **Logic**: Spearman 2018 algorithm (simplified/vectorized).
@@ -28,14 +28,14 @@ Implementation of core mathematical models and tactical logic.
 - **Outputs**: Probability Grid (32x24).
 - **Dependencies**: `numpy`.
 
-#### [NEW] [physics.py](file:///d:/Workspace/afta/backend/src/domain/services/physics.py)
+#### [NEW] [physics.py](../../backend/src/domain/services/physics.py)
 
 - Implement `PhysicsService`.
 - **Logic**: Velocity and Acceleration using central difference ($\Delta x / \Delta t$).
 - **Smoothing**: Savitzky-Golay filter (simple implementation or `scipy` if allowed, likely manual implementation for domain purity).
 - **Metrics**: Total Distance, Max Speed, Sprints (>25km/h).
 
-#### [NEW] [events.py](file:///d:/Workspace/afta/backend/src/domain/services/events.py)
+#### [NEW] [events.py](../../backend/src/domain/services/events.py)
 
 - Implement `TacticalEventsService`.
 - **Logic**: PPDA (Passes Per Defensive Action).
@@ -45,13 +45,13 @@ Implementation of core mathematical models and tactical logic.
 
 Integration with background workers and persistence.
 
-#### [NEW] [metrics_repo.py](file:///d:/Workspace/afta/backend/src/infrastructure/storage/metrics_repo.py)
+#### [NEW] [metrics_repo.py](../../backend/src/infrastructure/storage/metrics_repo.py)
 
 - Implement `MetricsRepository`.
 - **Storage**: Save calculated grids/metrics (Parquet or Binary Blob via Database).
 - **Interface**: `save_pitch_control_frame`, `save_physical_stats`.
 
-#### [NEW] [metrics_tasks.py](file:///d:/Workspace/afta/backend/src/infrastructure/worker/tasks/metrics_tasks.py)
+#### [NEW] [metrics_tasks.py](../../backend/src/infrastructure/worker/tasks/metrics_tasks.py)
 
 - Implement Celery tasks.
 - **Tasks**: `calculate_match_metrics_task`.
