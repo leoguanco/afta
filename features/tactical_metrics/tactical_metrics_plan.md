@@ -4,7 +4,15 @@ This plan details the implementation of the Tactical Domain Model as specified i
 
 ## User Review Required
 
-> [!IMPORTANT] > **Dependency on `numpy`**: The spec mandates `numpy` for vectorization in the Domain Layer. This introduces a heavy dependency to the domain. This is generally acceptable for data-heavy domains but worth noting as a deviation from "pure python stdlib" strictness if that was a prior constraint.
+> [!IMPORTANT] > **Dependency on `numpy`**: The spec now explicitly permits `numpy` as a scientific primitive in the Domain Layer, treating it as an extension of the language for vectorization purposes. This aligns with the "Pure Domain" constraint by standardizing it as a core type.
+
+## Implementation Status
+
+- [ ] Domain Services (`pitch_control.py`, `physics.py`, `events.py`)
+- [ ] Infrastructure (`metrics_repo.py`, `metrics_tasks.py`)
+- [ ] Tests (`test_tactical_metrics.py`)
+
+(Existing files are valid but plan is reset for review purposes)
 
 ## Proposed Changes
 

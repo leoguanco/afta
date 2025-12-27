@@ -62,7 +62,8 @@
 
 - **Constraints:**
   - **Vectorization:** Must use `numpy` to ensure the background task completes match-level processing in minutes.
-  - **Pure Domain:** The math logic must not depend on the Database or API.
+  - **Pure Domain:** The domain logic must not depend on the Database or API.
+  - **Scientific primitives:** `numpy` is permitted in the domain layer as it is treated as a fundamental scientific primitive for this specific vectorized domain logic.
 - **Edge Cases:**
   - **Substitute Players:** Metrics must be aggregated by Player ID to handle substitutions correctly.
   - **Outliers:** Speed > 36km/h should be flagged or clipped.
