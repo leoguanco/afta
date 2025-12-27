@@ -1,0 +1,31 @@
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+WORKDIR /app
+
+# Install python and dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-pip \
+    python3-dev \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Link python3 to python
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+# Install poetry via pip
+RUN pip3 install poetry
+
+# Copy dependency definition
+COPY pyproject.toml poetry.lock* /app/
+
+# Install dependencies
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi --no-root \
+    && pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+
+# Copy application code
+COPY . /app
+
+# Command (Overridden by docker-compose)
+CMD ["celery", "-A", "src.infrastructure.worker.celery_app", "worker", "-Q", "gpu_queue", "-l", "info"]

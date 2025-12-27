@@ -1,0 +1,172 @@
+version: "3.8"
+
+services:
+  # -------------------------------------------------------------------------
+  # 🐍 Python API (Infrastructure Adapter)
+  # -------------------------------------------------------------------------
+  api:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile.api
+    container_name: afta-api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/afta
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+    depends_on:
+      - db
+      - redis
+      - minio
+    networks:
+      - afta-net
+
+  # -------------------------------------------------------------------------
+  # ⚛️ Next.js Frontend
+  # -------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: afta-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    networks:
+      - afta-net
+
+  # -------------------------------------------------------------------------
+  # 🗄️ Database (PostGIS + PgVector)
+  # -------------------------------------------------------------------------
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: afta-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=afta
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - afta-net
+
+  # -------------------------------------------------------------------------
+  # 📨 Message Broker
+  # -------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: afta-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - afta-net
+
+  # -------------------------------------------------------------------------
+  # 📦 Object Storage (MinIO)
+  # -------------------------------------------------------------------------
+  minio:
+    image: minio/minio
+    container_name: afta-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - afta-net
+
+  # -------------------------------------------------------------------------
+  # 👷 Async Worker (General - CPU)
+  # -------------------------------------------------------------------------
+  worker-cpu:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile.worker
+    container_name: afta-worker-cpu
+    command: celery -A src.infrastructure.worker.celery_app worker -Q default -l info
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/afta
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+    depends_on:
+      - db
+      - redis
+    networks:
+      - afta-net
+
+  # -------------------------------------------------------------------------
+  # 👁️ Async Worker (Vision - GPU)
+  # -------------------------------------------------------------------------
+  worker-gpu:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile.gpu
+    container_name: afta-worker-gpu
+    command: celery -A src.infrastructure.worker.celery_app worker -Q gpu_queue -l info
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/afta
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+    depends_on:
+      - db
+      - redis
+    networks:
+      - afta-net
+
+  # -------------------------------------------------------------------------
+  # 📊 Observability (Prometheus + Grafana)
+  # -------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus
+    container_name: afta-prometheus
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - afta-net
+
+  grafana:
+    image: grafana/grafana
+    container_name: afta-grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - afta-net
+
+networks:
+  afta-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
