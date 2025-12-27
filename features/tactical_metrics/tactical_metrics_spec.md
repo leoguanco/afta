@@ -42,18 +42,18 @@
 ### **3.1 Architecture (Hexagonal + Async/Worker)**
 
 - **Domain Layer:**
-  - `src/domain/services/pitch_control.py`: Pure function implementing Spearman's algorithm.
-  - `src/domain/services/physics.py`: Velocity and Acceleration logic.
-  - `src/domain/services/events.py`: xT and PPDA logic.
+  - `src/domain/entities/match_frame.py`: Rich entity containing Pitch Control logic.
+  - `src/domain/entities/player_trajectory.py`: Rich entity containing Physics/Velocity logic.
+  - `src/domain/entities/tactical_match.py`: Rich entity containing PPDA/Event logic.
 - **Infrastructure Layer:**
   - `src/infrastructure/worker/tasks/metrics_tasks.py`: Background workers that invoke domain services.
   - `src/infrastructure/storage/metrics_repo.py`: Persistence for pre-calculated grids (Parquet/Binary).
 
 ### **3.2 Implementation Steps**
 
-1.  **Physical Engine:** Compute $\Delta x / \Delta t$ for velocity, applying smoothing.
-2.  **Space Engine:** Implement William Spearman's Pitch Control algorithm (vectorized with `numpy`).
-3.  **Tactical Engine:** Implement PPDA (Passes Per Defensive Action) logic using event stream.
+1.  **Physical Engine:** Implement `PlayerTrajectory.calculate_physical_metrics()` to compute velocity and distance.
+2.  **Space Engine:** Implement `MatchFrame.calculate_pitch_control()` using vectorized numpy operations.
+3.  **Tactical Engine:** Implement `TacticalMatch.calculate_ppda()` for defensive pressure.
 4.  **Async Workers:** Celery tasks that process chunks of match frames in parallel.
 
 ---

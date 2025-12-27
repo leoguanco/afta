@@ -8,7 +8,7 @@ This plan details the implementation of the Tactical Domain Model as specified i
 
 ## Implementation Status
 
-- [x] Domain Services (`pitch_control.py`, `physics.py`, `events.py`)
+- [x] Domain Entities (`match_frame.py`, `player_trajectory.py`, `tactical_match.py`)
 - [x] Infrastructure (`metrics_repo.py`, `metrics_tasks.py`)
 - [x] Tests (`test_tactical_metrics.py`)
 
@@ -20,26 +20,22 @@ This plan details the implementation of the Tactical Domain Model as specified i
 
 Implementation of core mathematical models and tactical logic.
 
-#### [NEW] [pitch_control.py](../../backend/src/domain/services/pitch_control.py)
+#### [NEW] [match_frame.py](../../backend/src/domain/entities/match_frame.py)
 
-- Implement `PitchControlService`.
-- **Logic**: Spearman 2018 algorithm (simplified/vectorized).
-- **Inputs**: Frame data (player coordinates, ball position).
-- **Outputs**: Probability Grid (32x24).
-- **Dependencies**: `numpy`.
+- Implement `MatchFrame` Rich Entity.
+- **Methods**: `calculate_pitch_control()`.
+- **Logic**: Spearman 2018 algorithm (embedded).
 
-#### [NEW] [physics.py](../../backend/src/domain/services/physics.py)
+#### [NEW] [player_trajectory.py](../../backend/src/domain/entities/player_trajectory.py)
 
-- Implement `PhysicsService`.
-- **Logic**: Velocity and Acceleration using central difference ($\Delta x / \Delta t$).
-- **Smoothing**: Savitzky-Golay filter (simple implementation or `scipy` if allowed, likely manual implementation for domain purity).
-- **Metrics**: Total Distance, Max Speed, Sprints (>25km/h).
+- Implement `PlayerTrajectory` Rich Entity.
+- **Methods**: `calculate_physical_metrics()`.
+- **Logic**: Velocity smoothing, sprint detection.
 
-#### [NEW] [events.py](../../backend/src/domain/services/events.py)
+#### [NEW] [tactical_match.py](../../backend/src/domain/entities/tactical_match.py)
 
-- Implement `TacticalEventsService`.
-- **Logic**: PPDA (Passes Per Defensive Action).
-- **Inputs**: Event stream (passes, defensive actions).
+- Implement `TacticalMatch` Rich Entity.
+- **Methods**: `calculate_ppda()`.
 
 ### Infrastructure Layer
 

@@ -1,12 +1,6 @@
-"""
-Start Calibration Use Case.
-
-Application layer orchestrator that triggers async calibration jobs.
-"""
-
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
-from src.infrastructure.worker.tasks.calibration_tasks import calibrate_video_task
+from src.domain.ports.calibration_job_dispatcher import CalibrationJobDispatcher
 
 
 @dataclass
@@ -22,8 +16,17 @@ class StartCalibrationUseCase:
     """
     Use Case to start an async calibration job.
 
-    Dispatches a Celery task and returns the job ID immediately.
+    Dispatches a Celery task via the JobDispatcher port.
     """
+    
+    def __init__(self, job_dispatcher: CalibrationJobDispatcher):
+        """
+        Initialize the use case.
+        
+        Args:
+            job_dispatcher: Port for dispatching background jobs.
+        """
+        self.job_dispatcher = job_dispatcher
 
     def execute(
         self, video_id: str, keypoints: List[Dict[str, Any]]
@@ -38,11 +41,11 @@ class StartCalibrationUseCase:
         Returns:
             CalibrationJobResult with the task ID.
         """
-        # Dispatch Celery task
-        task = calibrate_video_task.delay(video_id, keypoints)
+        # Dispatch via Port
+        job_id = self.job_dispatcher.dispatch(video_id, keypoints)
 
         return CalibrationJobResult(
-            job_id=task.id,
+            job_id=job_id,
             status="PENDING",
             message=f"Calibration job started for video {video_id}",
         )
