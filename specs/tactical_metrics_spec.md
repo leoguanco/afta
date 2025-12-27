@@ -1,5 +1,7 @@
 # ✨ Feature Specification: Tactical Metrics Engine
 
+> **Context:** This spec is part of the [Football Intelligence Engine](../feature_specs.md) project. For infrastructure constraints (TDD, Domain Purity, Async Workers), see [infrastructure_spec.md](infrastructure_spec.md).
+
 ## 1. 🚀 Overview & Motivation
 
 - **Feature Name:** Tactical Domain Model (Async Engine)
