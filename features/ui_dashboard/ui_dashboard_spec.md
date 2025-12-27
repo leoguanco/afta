@@ -67,7 +67,7 @@ The UI Dashboard is divided into 6 enumerated components. Follow the numbering f
   - `/matches` - Match listing
   - `/matches/{id}/tracking` - Player positions
   - `/matches/{id}/metrics` - Tactical metrics
-  - `/chat/analyze` - AI analysis (see [Agentic Reasoning](../agentic_reasoning/agentic_reasoning_spec.md))
+  - `/chat/analyze` - AI analysis (see [Agentic Reasoning](../06_agentic_reasoning/06_agentic_reasoning_spec.md))
 
 ### State Synchronization
 

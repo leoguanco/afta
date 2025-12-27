@@ -1,6 +1,6 @@
 # ✨ Feature Specification: Tactical Metrics Engine
 
-> **Context:** This spec is part of the [Football Intelligence Engine](../../feature_specs.md) project. For infrastructure constraints (TDD, Domain Purity, Async Workers), see [../infrastructure/infrastructure_spec.md](../infrastructure/infrastructure_spec.md).
+> **Context:** This spec is part of the [Football Intelligence Engine](../../feature_specs.md) project. For infrastructure constraints (TDD, Domain Purity, Async Workers), see [../01_infrastructure/01_infrastructure_spec.md](../01_infrastructure/01_infrastructure_spec.md).
 
 ## 1. 🚀 Overview & Motivation
 
