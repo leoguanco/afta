@@ -33,7 +33,7 @@
 | :---------------- | :------------- | :----------------------------------------------------------------- |
 | Data Ingestion    | Implemented    | [plans/data_ingestion_plan.md](plans/data_ingestion_plan.md)       |
 | Object Tracking   | 🟢 Implemented | [plans/object_tracking_plan.md](plans/object_tracking_plan.md)     |
-| Pitch Calibration | 🟡 Planned     | [plans/pitch_calibration_plan.md](plans/pitch_calibration_plan.md) |
+| Pitch Calibration | 🟢 Implemented | [plans/pitch_calibration_plan.md](plans/pitch_calibration_plan.md) |
 
 ---
 
