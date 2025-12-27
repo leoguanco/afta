@@ -15,15 +15,15 @@
 
 ## � Detailed Specifications
 
-| Module                | Description                                     | Link                                                               |
-| :-------------------- | :---------------------------------------------- | :----------------------------------------------------------------- |
-| **Infrastructure**    | Docker, Hexagonal structure, TDD, Observability | [specs/infrastructure_spec.md](specs/infrastructure_spec.md)       |
-| **Data Ingestion**    | StatsBomb, Metrica, Async Workers               | [specs/data_ingestion_spec.md](specs/data_ingestion_spec.md)       |
-| **Object Tracking**   | YOLOv8, ByteTrack, Vision Worker                | [specs/object_tracking_spec.md](specs/object_tracking_spec.md)     |
-| **Pitch Calibration** | Homography, Keypoint Detection                  | [specs/pitch_calibration_spec.md](specs/pitch_calibration_spec.md) |
-| **Tactical Metrics**  | Pitch Control, xT, PPDA, Physical Load          | [specs/tactical_metrics_spec.md](specs/tactical_metrics_spec.md)   |
-| **Agentic Reasoning** | RAG, CrewAI, LLM Analysis                       | [specs/agentic_reasoning_spec.md](specs/agentic_reasoning_spec.md) |
-| **UI Dashboard**      | Next.js, Interactive Pitch, Video Sync          | [specs/ui_dashboard_spec.md](specs/ui_dashboard_spec.md)           |
+| Module                | Description                                     | Link                                                                                                                                   |
+| :-------------------- | :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| **Infrastructure**    | Docker, Hexagonal structure, TDD, Observability | [specs/infrastructure_spec.md](specs/infrastructure_spec.md)                                                                           |
+| **Data Ingestion**    | StatsBomb, Metrica, Async Workers               | [specs/data_ingestion_spec.md](specs/data_ingestion_spec.md)                                                                           |
+| **Object Tracking**   | YOLOv8, ByteTrack, Vision Worker                | [specs/object_tracking_spec.md](specs/object_tracking_spec.md)                                                                         |
+| **Pitch Calibration** | Homography, Keypoint Detection                  | [specs/pitch_calibration_spec.md](specs/pitch_calibration_spec.md)                                                                     |
+| **Tactical Metrics**  | Pitch Control, xT, PPDA, Physical Load          | [specs/tactical_metrics_spec.md](specs/tactical_metrics_spec.md) <br> [plans/tactical_metrics_plan.md](plans/tactical_metrics_plan.md) |
+| **Agentic Reasoning** | RAG, CrewAI, LLM Analysis                       | [specs/agentic_reasoning_spec.md](specs/agentic_reasoning_spec.md)                                                                     |
+| **UI Dashboard**      | Next.js, Interactive Pitch, Video Sync          | [specs/ui_dashboard_spec.md](specs/ui_dashboard_spec.md)                                                                               |
 
 ---
 
