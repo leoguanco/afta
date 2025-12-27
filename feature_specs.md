@@ -15,26 +15,26 @@
 
 ## Detailed Specifications
 
-| Module                | Description                                     | Link                                                                                                                                                                                                                   |
-| :-------------------- | :---------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Infrastructure**    | Docker, Hexagonal structure, TDD, Observability | [features/infrastructure/infrastructure_spec.md](features/infrastructure/infrastructure_spec.md)                                                                                                                       |
-| **Data Ingestion**    | StatsBomb, Metrica, Async Workers               | [features/data_ingestion/data_ingestion_spec.md](features/data_ingestion/data_ingestion_spec.md)                                                                                                                       |
-| **Object Tracking**   | YOLOv8, ByteTrack, Vision Worker                | [features/object_tracking/object_tracking_spec.md](features/object_tracking/object_tracking_spec.md)                                                                                                                   |
-| **Pitch Calibration** | Homography, Keypoint Detection                  | [features/pitch_calibration/pitch_calibration_spec.md](features/pitch_calibration/pitch_calibration_spec.md)                                                                                                           |
-| **Tactical Metrics**  | Pitch Control, xT, PPDA, Physical Load          | [features/tactical_metrics/tactical_metrics_spec.md](features/tactical_metrics/tactical_metrics_spec.md) <br> [features/tactical_metrics/tactical_metrics_plan.md](features/tactical_metrics/tactical_metrics_plan.md) |
-| **Agentic Reasoning** | RAG, CrewAI, LLM Analysis                       | [features/agentic_reasoning/agentic_reasoning_spec.md](features/agentic_reasoning/agentic_reasoning_spec.md)                                                                                                           |
-| **UI Dashboard**      | Next.js, Interactive Pitch, Video Sync          | [features/ui_dashboard/ui_dashboard_spec.md](features/ui_dashboard/ui_dashboard_spec.md)                                                                                                                               |
+| Module                | Description                                     | Link                                                                                                                                                                                                                                           |
+| :-------------------- | :---------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Infrastructure**    | Docker, Hexagonal structure, TDD, Observability | [features/01_infrastructure/01_infrastructure_spec.md](features/01_infrastructure/01_infrastructure_spec.md)                                                                                                                                   |
+| **Data Ingestion**    | StatsBomb, Metrica, Async Workers               | [features/02_data_ingestion/02_data_ingestion_spec.md](features/02_data_ingestion/02_data_ingestion_spec.md)                                                                                                                                   |
+| **Object Tracking**   | YOLOv8, ByteTrack, Vision Worker                | [features/03_object_tracking/03_object_tracking_spec.md](features/03_object_tracking/03_object_tracking_spec.md)                                                                                                                               |
+| **Pitch Calibration** | Homography, Keypoint Detection                  | [features/04_pitch_calibration/04_pitch_calibration_spec.md](features/04_pitch_calibration/04_pitch_calibration_spec.md)                                                                                                                       |
+| **Tactical Metrics**  | Pitch Control, xT, PPDA, Physical Load          | [features/05_tactical_metrics/05_tactical_metrics_spec.md](features/05_tactical_metrics/05_tactical_metrics_spec.md) <br> [features/05_tactical_metrics/05_tactical_metrics_plan.md](features/05_tactical_metrics/05_tactical_metrics_plan.md) |
+| **Agentic Reasoning** | RAG, CrewAI, LLM Analysis                       | [features/06_agentic_reasoni g_spec.md](features/06_agentic_reasoning/06_agentic_reasoning_spec.md)                                                                                                                                            |
+| **UI Dashboard**      | Next.js, Interactive Pitch, Video Sync          | [features/ui_dashboard/ui_dashboard_spec.md](features/ui_dashboard/ui_dashboard_spec.md)                                                                                                                                                       |
 
 ---
 
 ## Implementation Plans
 
-| Feature           | Status         | Link                                                                                                         |
-| :---------------- | :------------- | :----------------------------------------------------------------------------------------------------------- |
-| Data Ingestion    | 🟢 Implemented | [features/data_ingestion/data_ingestion_plan.md](features/data_ingestion/data_ingestion_plan.md)             |
-| Object Tracking   | 🟢 Implemented | [features/object_tracking/object_tracking_plan.md](features/object_tracking/object_tracking_plan.md)         |
-| Pitch Calibration | 🟢 Implemented | [features/pitch_calibration/pitch_calibration_plan.md](features/pitch_calibration/pitch_calibration_plan.md) |
-| Tactical Metrics  | 🟢 Implemented | [features/tactical_metrics/tactical_metrics_plan.md](features/tactical_metrics/tactical_metrics_plan.md)     |
+| Feature           | Status         | Link                                                                                                                     |
+| :---------------- | :------------- | :----------------------------------------------------------------------------------------------------------------------- |
+| Data Ingestion    | 🟢 Implemented | [features/02_data_ingestion/02_data_ingestion_plan.md](features/02_data_ingestion/02_data_ingestion_plan.md)             |
+| Object Tracking   | 🟢 Implemented | [features/03_object_tracking/03_object_tracking_plan.md](features/03_object_tracking/03_object_tracking_plan.md)         |
+| Pitch Calibration | 🟢 Implemented | [features/04_pitch_calibration/04_pitch_calibration_plan.md](features/04_pitch_calibration/04_pitch_calibration_plan.md) |
+| Tactical Metrics  | 🟢 Implemented | [features/05_tactical_metrics/05_tactical_metrics_plan.md](features/05_tactical_metrics/05_tactical_metrics_plan.md)     |
 
 ---
 
