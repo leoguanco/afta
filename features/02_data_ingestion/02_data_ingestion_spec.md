@@ -19,17 +19,17 @@
 
 | Criteria ID | Acceptance Criteria                                                                                   | Status |
 | :---------- | :---------------------------------------------------------------------------------------------------- | :----- |
-| US1.1       | The system SHALL accept an ingestion request and return a `job_id` immediately.                       | [ ]    |
-| US1.2       | The ingestion task SHALL run in a background worker (e.g., Celery) to avoid blocking the main thread. | [ ]    |
+| US1.1       | The system SHALL accept an ingestion request and return a `job_id` immediately.                       | [x]    |
+| US1.2       | The ingestion task SHALL run in a background worker (e.g., Celery) to avoid blocking the main thread. | [x]    |
 
 ### **User Story 2:** As a **Data Scientist**, I want **Standardized Coordinates**, so that **my analysis works for any league.**
 
 | Criteria ID | Acceptance Criteria                                                                                                                          | Status |
 | :---------- | :------------------------------------------------------------------------------------------------------------------------------------------- | :----- |
-| US2.1       | All ingested data SHALL be transformed to the **Metric Pitch (105m x 68m)** Value Object.                                                    | [ ]    |
-| US2.2       | StatsBomb coordinates (0-120, 0-80) SHALL be linearly scaled to (0-105, 0-68).                                                               | [ ]    |
-| US2.3       | Metrica coordinates (0-1, 0-1) SHALL be linearly scaled to (0-105, 0-68).                                                                    | [ ]    |
-| US2.4       | The system SHALL store events in the `match_events` table with a standard schema using a standardized `event_type` enum (Pass, Shot, Carry). | [ ]    |
+| US2.1       | All ingested data SHALL be transformed to the **Metric Pitch (105m x 68m)** Value Object.                                                    | [x]    |
+| US2.2       | StatsBomb coordinates (0-120, 0-80) SHALL be linearly scaled to (0-105, 0-68).                                                               | [x]    |
+| US2.3       | Metrica coordinates (0-1, 0-1) SHALL be linearly scaled to (0-105, 0-68).                                                                    | [x]    |
+| US2.4       | The system SHALL store events in the `match_events` table with a standard schema using a standardized `event_type` enum (Pass, Shot, Carry). | [x]    |
 
 ---
 

@@ -49,7 +49,7 @@ services:
   # 🗄️ Database (PostGIS + PgVector)
   # -------------------------------------------------------------------------
   db:
-    image: postgis/postgis:16-3.4
+    image: ankane/pgvector:v0.5.1
     container_name: afta-db
     environment:
       - POSTGRES_USER=postgres
@@ -59,6 +59,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/docker/init-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
     networks:
       - afta-net
 
@@ -141,7 +142,7 @@ services:
       - afta-net
 
   # -------------------------------------------------------------------------
-  # 📊 Observability (Prometheus + Grafana)
+  # 📊 Observability (Prometheus + Grafana + Flower)
   # -------------------------------------------------------------------------
   prometheus:
     image: prom/prometheus
@@ -150,6 +151,19 @@ services:
       - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    networks:
+      - afta-net
+
+  flower:
+    image: mher/flower:0.9.7
+    container_name: afta-flower
+    command: celery --broker=redis://redis:6379/0 flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
     networks:
       - afta-net
 

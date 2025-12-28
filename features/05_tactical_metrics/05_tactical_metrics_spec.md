@@ -19,21 +19,21 @@
 
 | Criteria ID | Acceptance Criteria                                                                                                  | Status |
 | :---------- | :------------------------------------------------------------------------------------------------------------------- | :----- |
-| US1.1       | The system SHALL calculate **Total Distance (km)**, **Max Speed (km/h)**, and **Sprints (>25km/h)** for each player. | [ ]    |
-| US1.2       | The background worker SHALL smooth velocity data (Savitzky-Golay filter) to remove noise.                            | [ ]    |
+| US1.1       | The system SHALL calculate **Total Distance (km)**, **Max Speed (km/h)**, and **Sprints (>25km/h)** for each player. | [x]    |
+| US1.2       | The background worker SHALL smooth velocity data (Savitzky-Golay filter) to remove noise.                            | [x]    |
 
 ### **User Story 2:** As a **Tactical Analyst**, I want **Pitch Control**, so that **I can visualize space domination.**
 
 | Criteria ID | Acceptance Criteria                                                                                                | Status |
 | :---------- | :----------------------------------------------------------------------------------------------------------------- | :----- |
-| US2.1       | The system SHALL compute a **Pitch Control** model (based on Spearman 2018) for every frame.                       | [ ]    |
-| US2.2       | The output SHALL be a Probability Grid (e.g., 32x24) representing the likelihood of ball control at each location. | [ ]    |
+| US2.1       | The system SHALL compute a **Pitch Control** model (based on Spearman 2018) for every frame.                       | [x]    |
+| US2.2       | The output SHALL be a Probability Grid (e.g., 32x24) representing the likelihood of ball control at each location. | [x]    |
 
 ### **User Story 3:** As an **Analyst**, I want **metrics to be pre-calculated**, so that **the dashboard is fast.**
 
 | Criteria ID | Acceptance Criteria                                                                         | Status |
 | :---------- | :------------------------------------------------------------------------------------------ | :----- |
-| US3.1       | The system SHALL trigger metric calculation jobs automatically after tracking is completed. | [ ]    |
+| US3.1       | The system SHALL trigger metric calculation jobs automatically after tracking is completed. | [x]    |
 
 ---
 

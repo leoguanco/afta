@@ -1,11 +1,33 @@
-from fastapi import FastAPI
+import os
+import uuid
+from fastapi import FastAPI, Request
 from prometheus_client import make_asgi_app
 from pydantic import BaseModel
+
+# Configure JSON logging
+from src.infrastructure.logging import configure_logging, set_correlation_id, get_logger
+
+# Use JSON format in production (when not in DEBUG mode)
+use_json = os.getenv("DEBUG", "false").lower() != "true"
+configure_logging(json_format=use_json)
+
+logger = get_logger(__name__)
 
 # Now safe to import - chat router no longer imports heavy dependencies
 from src.infrastructure.api.endpoints.chat import router as chat_router
 
 app = FastAPI(title="Football Intelligence Engine API", version="0.1.0")
+
+
+@app.middleware("http")
+async def correlation_id_middleware(request: Request, call_next):
+    """Add correlation ID to each request for tracing."""
+    correlation_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4())[:8])
+    set_correlation_id(correlation_id)
+    response = await call_next(request)
+    response.headers["X-Correlation-ID"] = correlation_id
+    return response
+
 
 # Register routers
 app.include_router(chat_router)
@@ -13,6 +35,7 @@ app.include_router(chat_router)
 # Observability
 metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
+
 
 
 class IngestionRequest(BaseModel):
