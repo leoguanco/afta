@@ -158,10 +158,18 @@ services:
     container_name: afta-grafana
     ports:
       - "3001:3000"
+    volumes:
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
     depends_on:
       - prometheus
     networks:
       - afta-net
+
 
 networks:
   afta-net:

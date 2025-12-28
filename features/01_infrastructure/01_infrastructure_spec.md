@@ -17,24 +17,24 @@
 
 | Criteria ID | Acceptance Criteria                                                                                | Status |
 | :---------- | :------------------------------------------------------------------------------------------------- | :----- |
-| US1.1       | The project structure SHALL clearly separate `domain`, `application`, and `infrastructure` layers. | [ ]    |
-| US1.2       | The `domain` layer SHALL NOT depend on any external libraries (Framework Agnostic).                | [ ]    |
+| US1.1       | The project structure SHALL clearly separate `domain`, `application`, and `infrastructure` layers. | [x]    |
+| US1.2       | The `domain` layer SHALL NOT depend on any external libraries (Framework Agnostic).                | [x]    |
 
 ### **User Story 2:** As a **System**, I want **Specialized Workers (GPU/CPU)**, so that **I can scale efficiently.**
 
 | Criteria ID | Acceptance Criteria                                                                      | Status |
 | :---------- | :--------------------------------------------------------------------------------------- | :----- |
-| US2.1       | The stack SHALL include a `vision-worker` container with **NVIDIA CUDA Runtime** access. | [ ]    |
-| US2.2       | The stack SHALL include a `general-worker` container for CPU tasks (Ingestion, Metrics). | [ ]    |
-| US2.3       | Celery SHALL route vision tasks to the `gpu_queue`.                                      | [ ]    |
+| US2.1       | The stack SHALL include a `vision-worker` container with **NVIDIA CUDA Runtime** access. | [x]    |
+| US2.2       | The stack SHALL include a `general-worker` container for CPU tasks (Ingestion, Metrics). | [x]    |
+| US2.3       | Celery SHALL route vision tasks to the `gpu_queue`.                                      | [x]    |
 
 ### **User Story 3:** As a **DevOps Engineer**, I want **Observability**, so that **I can debug issues.**
 
 | Criteria ID | Acceptance Criteria                                                                         | Status |
 | :---------- | :------------------------------------------------------------------------------------------ | :----- |
-| US3.1       | The system SHALL expose **Prometheus** metrics at `/metrics`.                               | [ ]    |
+| US3.1       | The system SHALL expose **Prometheus** metrics at `/metrics`.                               | [x]    |
 | US3.2       | The system SHALL log in **JSON format** only when errors occur, containing correlation IDs. | [ ]    |
-| US3.3       | **Grafana** SHALL be pre-configured with a dashboard showing system health.                 | [ ]    |
+| US3.3       | **Grafana** SHALL be pre-configured with a dashboard showing system health.                 | [x]    |
 
 ---
 
