@@ -8,6 +8,7 @@ import logging
 from typing import List
 import cv2
 import pandas as pd
+from minio.error import S3Error
 
 from src.infrastructure.worker.celery_app import celery_app
 from src.infrastructure.vision.yolo_detector import YOLODetector
@@ -79,10 +80,19 @@ def process_video_task(self, video_path: str, output_path: str) -> dict:
         ]
         df = pd.DataFrame(trajectory_data)
         
-        # Save to MinIO
-        storage = MinIOAdapter()
-        match_id = video_path.split("/")[-1].split(".")[0]  # Extract match ID from filename
-        storage.save_parquet(f"tracking/{match_id}.parquet", df)
+        # Save to MinIO with explicit error handling
+        try:
+            storage = MinIOAdapter()
+            match_id = video_path.split("/")[-1].split(".")[0]  # Extract match ID from filename
+            storage.save_parquet(f"tracking/{match_id}.parquet", df)
+            logger.info(f"Successfully uploaded trajectory data to MinIO: tracking/{match_id}.parquet")
+        except S3Error as s3_err:
+            logger.error(f"MinIO S3 error during upload: {s3_err}")
+            # Re-raise to trigger Celery retry mechanism
+            raise
+        except Exception as upload_err:
+            logger.error(f"Unexpected error during MinIO upload: {upload_err}")
+            raise
 
         logger.info(f"Video processing complete: {frame_id} frames, {len(all_trajectories)} trajectories")
 
@@ -93,6 +103,9 @@ def process_video_task(self, video_path: str, output_path: str) -> dict:
             "trajectory_count": len(all_trajectories),
         }
 
+    except S3Error as s3_exc:
+        logger.error(f"MinIO connectivity issue, will retry: {s3_exc}")
+        raise self.retry(exc=s3_exc, countdown=5)
     except Exception as exc:
         logger.error(f"Video processing failed: {exc}")
         raise self.retry(exc=exc, countdown=5)

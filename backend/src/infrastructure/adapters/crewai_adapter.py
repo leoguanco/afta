@@ -36,11 +36,13 @@ class CrewAIAdapter(AnalysisPort):
         """
         analyst = Agent(
             role="Football Tactical Analyst",
-            goal="Analyze match data and identify tactical patterns, strengths, and weaknesses",
+            goal="Analyze match data and identify tactical patterns, strengths, and weaknesses based on provided statistics",
             backstory=(
                 "You are an expert football tactical analyst with deep knowledge of modern "
                 "football tactics, formations, and player movements. You specialize in analyzing "
-                "match data to extract actionable insights for coaches and performance analysts."
+                "match data to extract actionable insights for coaches and performance analysts. "
+                "CRITICAL: You MUST base your analysis on the specific match statistics provided to you. "
+                "Do not make assumptions or provide generic football knowledge - cite the actual data points given."
             ),
             llm=self.llm,
             verbose=True
@@ -52,7 +54,7 @@ class CrewAIAdapter(AnalysisPort):
             backstory=(
                 "You are a professional sports journalist specialized in tactical analysis. "
                 "You excel at taking complex data and turning it into compelling, easy-to-understand "
-                "narratives that coaches can act upon."
+                "narratives that coaches can act upon. Always reference specific statistics when making claims."
             ),
             llm=self.llm,
             verbose=True
@@ -60,7 +62,7 @@ class CrewAIAdapter(AnalysisPort):
         
         return {"analyst": analyst, "writer": writer}
     
-    def create_tasks(self, agents: Dict[str, Agent], match_id: str, query: str) -> List[Task]:
+    def create_tasks(self, agents: Dict[str, Agent], match_id: str, query: str, match_context: str = "") -> List[Task]:
         """
         Create analysis tasks for the crew.
         
@@ -68,23 +70,26 @@ class CrewAIAdapter(AnalysisPort):
             agents: Dictionary of agents
             match_id: Match identifier
             query: User's analysis query
+            match_context: Formatted string with match statistics and context
             
         Returns:
             List of CrewAI tasks
         """
+        context_section = f"""
+        
+MATCH CONTEXT AND STATISTICS:
+{match_context if match_context else "No specific match data available. Provide general tactical analysis."}
+        """ if match_context or True else ""
+        
         analysis_task = Task(
             description=f"""
             Analyze match {match_id} with focus on: {query}
+            {context_section}
+            Review the provided match data and identify tactical patterns.
             
-            Review available match data including:
-            - Player positions and movements
-            - Tactical formations
-            - Passing patterns
-            - Defensive organization
-            
-            Provide detailed tactical insights.
+            Provide detailed tactical insights based on the statistics above.
             """,
-            expected_output="Detailed tactical analysis with specific observations and patterns",
+            expected_output="Detailed tactical analysis with specific observations and patterns citing the provided statistics",
             agent=agents["analyst"]
         )
         
@@ -93,31 +98,32 @@ class CrewAIAdapter(AnalysisPort):
             Based on the tactical analysis, create a concise report for coaches.
             
             The report should include:
-            1. Key findings (2-3 main points)
+            1. Key findings (2-3 main points) with specific statistics
             2. Tactical recommendations
             3. Areas for improvement
             
             Keep it actionable and focused on {query}.
             """,
-            expected_output="A concise, actionable report in markdown format",
+            expected_output="A concise, actionable report in markdown format with data-backed insights",
             agent=agents["writer"]
         )
         
         return [analysis_task, report_task]
     
-    def run_analysis(self, match_id: str, query: str) -> str:
+    def run_analysis(self, match_id: str, query: str, match_context: str = "") -> str:
         """
         Run CrewAI analysis synchronously.
         
         Args:
             match_id: Match identifier
             query: User's analysis query
+            match_context: Formatted string with match statistics
             
         Returns:
             Analysis result as string
         """
         agents = self.create_agents()
-        tasks = self.create_tasks(agents, match_id, query)
+        tasks = self.create_tasks(agents, match_id, query, match_context)
         
         crew = Crew(
             agents=list(agents.values()),

@@ -7,6 +7,7 @@ from celery import shared_task
 import time
 
 from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
+from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
 from prometheus_client import Histogram, Counter
 
 # Metrics
@@ -40,9 +41,12 @@ def run_crewai_analysis_task(match_id: str, query: str) -> dict:
     start_time = time.time()
     
     try:
-        # Initialize CrewAI and run analysis
+        # Build match context from database
+        match_context = _build_match_context(match_id)
+        
+        # Initialize CrewAI and run analysis with context
         adapter = CrewAIAdapter()
-        result_text = adapter.run_analysis(match_id, query)
+        result_text = adapter.run_analysis(match_id, query, match_context)
         
         duration = time.time() - start_time
         
@@ -69,3 +73,53 @@ def run_crewai_analysis_task(match_id: str, query: str) -> dict:
             'error': str(e),
             'duration': duration
         }
+
+
+def _build_match_context(match_id: str) -> str:
+    """
+    Build match context string from database.
+    
+    Args:
+        match_id: Match identifier
+        
+    Returns:
+        Formatted string with match statistics
+    """
+    try:
+        repo = PostgresMatchRepo()
+        match = repo.get_match(match_id, source="statsbomb")
+        
+        if not match:
+            return "Match not found in database."
+        
+        # Build context string
+        context_lines = [
+            f"Match: {match.home_team_id} vs {match.away_team_id}",
+            f"Total Events: {len(match.events)}",
+        ]
+        
+        # Count events by type
+        from collections import Counter
+        event_counts = Counter(event.event_type.value for event in match.events)
+        
+        context_lines.append("\nEvent Breakdown:")
+        for event_type, count in event_counts.most_common():
+            context_lines.append(f"  - {event_type}: {count}")
+        
+        # Get events by team (if available)
+        team_events = {}
+        for event in match.events:
+            if event.team_id:
+                if event.team_id not in team_events:
+                    team_events[event.team_id] = []
+                team_events[event.team_id].append(event)
+        
+        if team_events:
+            context_lines.append("\nTeam Statistics:")
+            for team_id, events in team_events.items():
+                context_lines.append(f"  {team_id}: {len(events)} events")
+        
+        return "\n".join(context_lines)
+        
+    except Exception as e:
+        return f"Error loading match context: {str(e)}"

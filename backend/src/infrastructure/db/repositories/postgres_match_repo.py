@@ -6,6 +6,8 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from src.domain.entities.match import Match
+from src.domain.entities.event import Event, EventType
+from src.domain.value_objects.coordinates import Coordinates
 from src.domain.ports.match_repository import MatchRepository
 from src.infrastructure.db.database import SessionLocal
 from src.infrastructure.db.models import MatchModel, EventModel
@@ -44,11 +46,36 @@ class PostgresMatchRepo(MatchRepository):
             if not match_model:
                 return None
             
-            # Map DB model to Domain entity
-            # Note: This is a simplified mapping. In production, you'd reconstruct full Event objects
+            # Reconstruct Event entities from EventModel
+            events = []
+            for event_model in match_model.events:
+                # Convert event_type string to EventType enum
+                try:
+                    event_type = EventType(event_model.event_type)
+                except ValueError:
+                    # Skip events with unknown types
+                    continue
+                
+                # Create Coordinates value object
+                coordinates = Coordinates(x=event_model.x, y=event_model.y)
+                
+                # Reconstruct Event entity
+                event = Event(
+                    event_id=str(event_model.id),
+                    event_type=event_type,
+                    timestamp=event_model.timestamp,
+                    coordinates=coordinates,
+                    player_id=event_model.metadata.get("player_id", "unknown") if event_model.metadata else "unknown",
+                    team_id=event_model.metadata.get("team_id") if event_model.metadata else None
+                )
+                events.append(event)
+            
+            # Reconstruct Match aggregate
             return Match(
                 match_id=match_model.match_id,
-                events=[]  # TODO: Reconstruct Event entities from EventModel
+                home_team_id=match_model.metadata.get("home_team_id", "unknown") if match_model.metadata else "unknown",
+                away_team_id=match_model.metadata.get("away_team_id", "unknown") if match_model.metadata else "unknown",
+                events=events
             )
         finally:
             if not self.session:
@@ -70,23 +97,43 @@ class PostgresMatchRepo(MatchRepository):
                 # Update existing match (or skip to maintain idempotency)
                 pass
             else:
-                # Create new match
+                # Create new match with metadata
+                match_metadata = {
+                    "home_team_id": match.home_team_id,
+                    "away_team_id": match.away_team_id,
+                }
+                if match.competition:
+                    match_metadata["competition"] = match.competition
+                if match.season:
+                    match_metadata["season"] = match.season
+                if match.match_date:
+                    match_metadata["match_date"] = match.match_date
+                
                 match_model = MatchModel(
                     match_id=match.match_id,
-                    source="statsbomb",  # TODO: Get from match metadata
-                    metadata={}
+                    source="statsbomb",  # Default source, can be overridden via Match metadata if needed
+                    metadata=match_metadata
                 )
                 session.add(match_model)
                 
                 # Create events
                 for event in match.events:
+                    event_metadata = {
+                        "player_id": event.player_id,
+                    }
+                    if event.team_id:
+                        event_metadata["team_id"] = event.team_id
+                    if event.end_coordinates:
+                        event_metadata["end_x"] = event.end_coordinates.x
+                        event_metadata["end_y"] = event.end_coordinates.y
+                    
                     event_model = EventModel(
                         match_id=match.match_id,
-                        event_type=event.event_type,
+                        event_type=event.event_type.value,
                         timestamp=event.timestamp,
-                        x=event.x,
-                        y=event.y,
-                        metadata={}
+                        x=event.coordinates.x,
+                        y=event.coordinates.y,
+                        metadata=event_metadata
                     )
                     session.add(event_model)
             
