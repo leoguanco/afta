@@ -13,13 +13,13 @@ Enhance the `CrewAIAdapter` to provide deep, data-driven tactical insights. Curr
 
 ### Infrastructure Layer
 
-#### [MODIFY] [crewai_adapter.py](file:///d:/Workspace/afta/backend/src/infrastructure/adapters/crewai_adapter.py)
+#### [MODIFY] [crewai_adapter.py](../../../backend/src/infrastructure/adapters/crewai_adapter.py)
 
 - **Method `run_analysis`**: Update signature to accept `match_context: str` (or a `Dict` of stats).
 - **Method `create_tasks`**: Update the `description` string to include this `match_context`.
 - **Method `create_agents`**: Enhance `backstory` to explicitly instruct agents to _use_ the provided data points.
 
-#### [MODIFY] [crewai_tasks.py](file:///d:/Workspace/afta/backend/src/infrastructure/worker/tasks/crewai_tasks.py)
+#### [MODIFY] [crewai_tasks.py](../../../backend/src/infrastructure/worker/tasks/crewai_tasks.py)
 
 - Import `PostgresMatchRepo`.
 - In `run_crewai_analysis_task`:

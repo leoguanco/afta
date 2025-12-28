@@ -13,13 +13,21 @@ Implement database persistence for the Data Ingestion module. This involves crea
 
 ### Infrastructure Layer
 
-#### [NEW] [postgres_match_repo.py](file:///d:/Workspace/afta/backend/src/infrastructure/db/repositories/postgres_match_repo.py)
+#### [NEW] [postgres_match_repo.py](../02b_ingestion_completion_plan.md)
+
+<!-- Note: The original link pointed to absolute path, now changing to relative path logic or just markdown link.
+But wait, the link text is [postgres_match_repo.py], the target is inside src.
+Let's make it relative to the md file location: features/02_data_ingestion/02a_ingestion_persistence_plan.md
+Relative path to src/infrastructure/db/repositories/postgres_match_repo.py is ../../../backend/src/infrastructure/db/repositories/postgres_match_repo.py
+-->
+
+#### [NEW] [postgres_match_repo.py](../../../backend/src/infrastructure/db/repositories/postgres_match_repo.py)
 
 - Implement `PostgresMatchRepo` class inheriting from `MatchRepository`.
 - Implement `save(match: Match)` method using SQLAlchemy session.
 - Map Domain Entities (`Match`, `Event`) to SQLAlchemy Models (`MatchModel`, `EventModel`).
 
-#### [MODIFY] [ingestion_tasks.py](file:///d:/Workspace/afta/backend/src/infrastructure/worker/tasks/ingestion_tasks.py)
+#### [MODIFY] [ingestion_tasks.py](../../../backend/src/infrastructure/worker/tasks/ingestion_tasks.py)
 
 - Import `PostgresMatchRepo`.
 - Instantiate repository in `ingest_match_task`.

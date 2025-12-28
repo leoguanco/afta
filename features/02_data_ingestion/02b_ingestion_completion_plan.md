@@ -13,7 +13,7 @@ Complete the implementation of `PostgresMatchRepo` to correctly persist and reco
 
 ### Infrastructure Layer
 
-#### [MODIFY] [postgres_match_repo.py](file:///d:/Workspace/afta/backend/src/infrastructure/db/repositories/postgres_match_repo.py)
+#### [MODIFY] [postgres_match_repo.py](../../../backend/src/infrastructure/db/repositories/postgres_match_repo.py)
 
 - **Method `get_match`**:
   - Remove `events=[] # TODO`.

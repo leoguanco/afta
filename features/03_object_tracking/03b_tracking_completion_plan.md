@@ -13,12 +13,12 @@ Harden the `MinIOAdapter` and `vision_tasks.py` to ensure robust, error-tolerant
 
 ### Infrastructure Layer
 
-#### [MODIFY] [minio_adapter.py](file:///d:/Workspace/afta/backend/src/infrastructure/storage/minio_adapter.py)
+#### [MODIFY] [minio_adapter.py](../../../backend/src/infrastructure/storage/minio_adapter.py)
 
 - Update `save_parquet` to explicitly set `content_type="application/octet-stream"`.
 - Add a check `self.client.bucket_exists` inside `save_parquet` (or ensure it's cached) to prevent "Bucket not found" errors on fresh deploys.
 
-#### [MODIFY] [vision_tasks.py](file:///d:/Workspace/afta/backend/src/infrastructure/worker/tasks/vision_tasks.py)
+#### [MODIFY] [vision_tasks.py](../../../backend/src/infrastructure/worker/tasks/vision_tasks.py)
 
 - Wrap the upload section in a specific `try/except S3Error` block.
 - In the `except` block, log a specific warning and re-raise to trigger the Celery `retry` mechanism.

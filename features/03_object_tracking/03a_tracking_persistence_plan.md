@@ -13,7 +13,7 @@ Implement file storage persistence for the Object Tracking module. This involves
 
 ### Infrastructure Layer
 
-#### [NEW] [minio_adapter.py](file:///d:/Workspace/afta/backend/src/infrastructure/storage/minio_adapter.py)
+#### [NEW] [minio_adapter.py](../../../backend/src/infrastructure/storage/minio_adapter.py)
 
 - Implement `MinIOAdapter` class inheriting from `ObjectStoragePort` (to be defined).
 - Use `minio` Python client to handle file uploads.
@@ -22,7 +22,7 @@ Implement file storage persistence for the Object Tracking module. This involves
   - Serializes to Parquet.
   - Uploads to `tracking/{match_id}.parquet`.
 
-#### [MODIFY] [vision_tasks.py](file:///d:/Workspace/afta/backend/src/infrastructure/worker/tasks/vision_tasks.py)
+#### [MODIFY] [vision_tasks.py](../../../backend/src/infrastructure/worker/tasks/vision_tasks.py)
 
 - Import `MinIOAdapter`.
 - Instantiate adapter in `process_video_task`.

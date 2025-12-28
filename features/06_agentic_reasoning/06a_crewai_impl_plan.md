@@ -13,7 +13,7 @@ Implement the Agentic Reasoning feature using CrewAI, replacing the current mock
 
 ### Infrastructure Layer
 
-#### [NEW] [crewai_adapter.py](file:///d:/Workspace/afta/backend/src/infrastructure/adapters/crewai_adapter.py)
+#### [NEW] [crewai_adapter.py](../../../backend/src/infrastructure/adapters/crewai_adapter.py)
 
 - Implement `CrewAIAdapter` class implementing `AnalysisPort`.
 - Define CrewAI `Agent` objects:
@@ -25,7 +25,7 @@ Implement the Agentic Reasoning feature using CrewAI, replacing the current mock
   - Run `crew.kickoff(inputs={...})` synchronously (wrapped in async task).
   - Return the result.
 
-#### [MODIFY] [crewai_tasks.py](file:///d:/Workspace/afta/backend/src/infrastructure/worker/tasks/crewai_tasks.py)
+#### [MODIFY] [crewai_tasks.py](../../../backend/src/infrastructure/worker/tasks/crewai_tasks.py)
 
 - Import `CrewAIAdapter`.
 - Replace `_run_mock_analysis` with `adapter.dispatch_analysis`.
