@@ -6,10 +6,34 @@
 
 ## 📐 Architecture Overview
 
-- **Backend:** Python 3.11+ (FastAPI), **Hexagonal Architecture**, Celery Workers.
+- **Backend:** Python 3.10+ (FastAPI), **Hexagonal Architecture**, Celery Workers.
 - **Frontend:** Next.js 14 (TypeScript), Shadcn/UI, TailwindCSS.
 - **Database:** PostgreSQL 16 (PostGIS, pgvector).
 - **Infrastructure:** Docker Compose, Redis, MinIO, Prometheus, Grafana.
+
+### Service Architecture
+
+| Service      | Purpose                            | Queue       | Dependencies                      |
+| ------------ | ---------------------------------- | ----------- | --------------------------------- |
+| `api`        | HTTP endpoints (FastAPI)           | -           | Minimal (FastAPI, DB, Redis)      |
+| `worker-cpu` | Data ingestion, CrewAI analysis    | `default`   | Full ML stack (CrewAI, LangChain) |
+| `worker-gpu` | Video processing (YOLO, ByteTrack) | `gpu_queue` | CUDA, PyTorch, OpenCV             |
+
+---
+
+## 🔌 API Endpoints
+
+| Endpoint                    | Method | Purpose                              | Worker     |
+| --------------------------- | ------ | ------------------------------------ | ---------- |
+| `/health`                   | GET    | Real connectivity checks (DB, Redis) | -          |
+| `/docs`                     | GET    | OpenAPI documentation                | -          |
+| `/metrics`                  | GET    | Prometheus metrics                   | -          |
+| `/api/v1/ingest`            | POST   | Start match data ingestion           | worker-cpu |
+| `/api/v1/process-video`     | POST   | Start video tracking (YOLO)          | worker-gpu |
+| `/api/v1/calibrate`         | POST   | Compute pitch homography             | worker-cpu |
+| `/api/v1/calculate-metrics` | POST   | Calculate tactical metrics           | worker-cpu |
+| `/api/v1/chat/analyze`      | POST   | Start AI analysis (CrewAI)           | worker-cpu |
+| `/api/v1/chat/jobs/{id}`    | GET    | Poll job status                      | -          |
 
 ---
 
@@ -27,16 +51,24 @@
 
 ---
 
-## Implementation Plans
+## Implementation Status
 
-| Feature           | Status         | Link                                                                                                                                                                                                                                              |
-| :---------------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Data Ingestion    | 🟢 Implemented | [features/02_data_ingestion/02_data_ingestion_plan.md](features/02_data_ingestion/02_data_ingestion_plan.md)                                                                                                                                      |
-| Object Tracking   | 🟢 Implemented | [features/03_object_tracking/03_object_tracking_plan.md](features/03_object_tracking/03_object_tracking_plan.md)                                                                                                                                  |
-| Pitch Calibration | 🟢 Implemented | [features/04_pitch_calibration/04_pitch_calibration_plan.md](features/04_pitch_calibration/04_pitch_calibration_plan.md)                                                                                                                          |
-| Tactical Metrics  | 🟢 Implemented | [features/05_tactical_metrics/05_tactical_metrics_plan.md](features/05_tactical_metrics/05_tactical_metrics_plan.md)                                                                                                                              |
-| Agentic Reasoning | 🟢 Implemented | [features/06_agentic_reasoning/06_agentic_reasoning_plan.md](features/06_agentic_reasoning/06_agentic_reasoning_plan.md)                                                                                                                          |
-| **Delta Specs**   | 🟡 Pending     | [Ingestion Persistence](features/02_data_ingestion/02a_ingestion_persistence_spec.md), [Tracking Persistence](features/03_object_tracking/03a_tracking_persistence_spec.md), [CrewAI Impl](features/06_agentic_reasoning/06a_crewai_impl_spec.md) |
+| Feature           | Status         | API Endpoint                | Notes                          |
+| :---------------- | :------------- | :-------------------------- | :----------------------------- |
+| Data Ingestion    | 🟢 Implemented | `/api/v1/ingest`            | StatsBomb adapter complete     |
+| Object Tracking   | 🟢 Implemented | `/api/v1/process-video`     | YOLO + ByteTrack on GPU worker |
+| Pitch Calibration | 🟢 Implemented | `/api/v1/calibrate`         | OpenCV homography computation  |
+| Tactical Metrics  | 🟢 Implemented | `/api/v1/calculate-metrics` | Rich domain entities           |
+| Agentic Reasoning | 🟢 Implemented | `/api/v1/chat/analyze`      | CrewAI multi-agent system      |
+| Health Monitoring | 🟢 Implemented | `/health`                   | Real DB/Redis connectivity     |
+
+### Architecture Improvements (Recent)
+
+- ✅ **Hexagonal Architecture** - Ports & Adapters pattern
+- ✅ **Dependency Separation** - `requirements-api.txt` vs `requirements-worker.txt`
+- ✅ **Test Doubles** - Fakes instead of `mock.patch` (see `tests/fakes.py`)
+- ✅ **Lazy Task Dispatch** - API uses `send_task()` to avoid importing heavy deps
+- ✅ **Real Health Checks** - DB and Redis connectivity verified
 
 ---
 
@@ -51,13 +83,53 @@ docker-compose up -d --build
 # Access
 # Dashboard: http://localhost:3000
 # API Docs:  http://localhost:8000/docs
-# Flower:    http://localhost:5555
+# Health:    http://localhost:8000/health
+```
+
+### Initialize Database (First Time)
+
+```bash
+# Set environment and run init script
+$env:DATABASE_URL='postgresql://postgres:postgres@localhost:5432/afta'
+python -m src.infrastructure.db.init_db
+```
+
+### Run Tests
+
+```bash
+cd backend
+pytest tests/ -v
 ```
 
 ---
 
-## � References
+## 📁 Project Structure
 
-- [README.md](README.md) - Full project documentation.
+```
+afta/
+├── backend/
+│   ├── src/
+│   │   ├── domain/           # Entities, Value Objects, Ports
+│   │   ├── application/      # Use Cases
+│   │   └── infrastructure/   # Adapters, API, Workers
+│   ├── tests/
+│   │   └── fakes.py          # Test doubles
+│   ├── docker/
+│   │   ├── Dockerfile.api    # Minimal deps (FastAPI)
+│   │   ├── Dockerfile.worker # Full ML stack
+│   │   └── Dockerfile.gpu    # CUDA + PyTorch
+│   ├── requirements-api.txt
+│   └── requirements-worker.txt
+├── frontend/
+├── docker-compose.yml
+└── feature_specs.md          # This file
+```
+
+---
+
+## 📚 References
+
+- [README.md](README.md) - Full project documentation
+- [GPU_WORKER.md](backend/GPU_WORKER.md) - GPU worker architecture
 - [StatsBomb Open Data](https://github.com/statsbomb/open-data)
 - [Metrica Sports Sample Data](https://github.com/metrica-sports/sample-data)
