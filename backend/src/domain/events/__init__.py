@@ -1,6 +1,6 @@
 """Domain Events Package."""
 from .base import DomainEvent
-from .tracking_completed import TrackingCompletedEvent
+from .video_processed import TrackingCompletedEvent
 from .calibration_completed import CalibrationCompletedEvent
 
 __all__ = [
@@ -8,3 +8,4 @@ __all__ = [
     "TrackingCompletedEvent",
     "CalibrationCompletedEvent",
 ]
+

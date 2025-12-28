@@ -19,14 +19,14 @@
 
 | Criteria ID | Acceptance Criteria                                                                    | Status |
 | :---------- | :------------------------------------------------------------------------------------- | :----- |
-| US1.1       | The system SHALL accept a video upload and return a `job_id` immediately.              | [ ]    |
-| US1.2       | The Vision Worker SHALL process the video and save results to the Tracking Repository. | [ ]    |
+| US1.1       | The system SHALL accept a video upload and return a `job_id` immediately.              | [x]    |
+| US1.2       | The Vision Worker SHALL process the video and save results to the Tracking Repository. | [x]    |
 
 ### **User Story 2:** As a **Domain**, I want **clean Trajectory objects**, so that **I don't depend on YOLO internals.**
 
 | Criteria ID | Acceptance Criteria                                                            | Status |
 | :---------- | :----------------------------------------------------------------------------- | :----- |
-| US2.1       | The Worker SHALL transform raw Bounding Boxes into `Trajectory` Value Objects. | [ ]    |
+| US2.1       | The Worker SHALL transform raw Bounding Boxes into `Trajectory` Value Objects. | [x]    |
 
 ---
 

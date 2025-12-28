@@ -18,8 +18,8 @@
 
 | Criteria ID | Acceptance Criteria                                                                      | Status |
 | :---------- | :--------------------------------------------------------------------------------------- | :----- |
-| US1.1       | The system SHALL process calibration requests in a background worker.                    | [ ]    |
-| US1.2       | The system SHALL notify the UI (via webhook or status poll) when $H$ matrices are ready. | [ ]    |
+| US1.1       | The system SHALL process calibration requests in a background worker.                    | [x]    |
+| US1.2       | The system SHALL notify the UI (via webhook or status poll) when $H$ matrices are ready. | [x]    |
 
 ---
 
@@ -28,16 +28,22 @@
 ### **3.1 Architecture (Hexagonal + Async)**
 
 - **Domain:**
-  - `src/domain/services/calibration_service.py`
+  - `src/domain/entities/pitch_calibration.py` (Rich entity with homography calculation)
+  - `src/domain/value_objects/keypoint.py` (Keypoint value object)
+  - `src/domain/value_objects/homography_matrix.py` (Homography matrix value object)
+  - `src/domain/ports/keypoint_detector.py` (Interface for keypoint detection)
 - **Infrastructure:**
-  - `src/infrastructure/cv/homography.py` (OpenCV implementation)
+  - `src/infrastructure/cv/opencv_homography.py` (OpenCV implementation)
   - `src/infrastructure/worker/tasks/calibration_tasks.py` (Celery tasks)
+- **Application:**
+  - `src/application/use_cases/start_calibration.py` (Orchestrates async calibration)
 
 ### **3.2 Implementation Steps**
 
 1.  **Define Port:** `KeypointDetector` port.
-2.  **Implement Async Logic:** Wrap the calibration logic in a background worker task.
-3.  **Application Logic:** `StartCalibration(match_id)` use case returns a job identifier.
+2.  **Rich Entity:** `PitchCalibration` entity encapsulates homography calculation logic.
+3.  **Implement Async Logic:** Wrap the calibration logic in a background worker task.
+4.  **Application Logic:** `StartCalibration(match_id)` use case returns a job identifier.
 
 ---
 

@@ -18,8 +18,8 @@
 
 | Criteria ID | Acceptance Criteria                                                                  | Status |
 | :---------- | :----------------------------------------------------------------------------------- | :----- |
-| US1.1       | The UI SHALL poll for the status of an LLM request started via the API.              | [ ]    |
-| US1.2       | The background task SHALL update the `Status` and eventual `Result` in the database. | [ ]    |
+| US1.1       | The UI SHALL poll for the status of an LLM request started via the API.              | [x]    |
+| US1.2       | The background task SHALL update the `Status` and eventual `Result` in the database. | [x]    |
 
 ---
 
