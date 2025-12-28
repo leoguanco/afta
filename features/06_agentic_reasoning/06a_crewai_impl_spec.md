@@ -15,11 +15,11 @@
 
 ### **User Story 1:** As an **Analyst**, I want **real AI insights**, so that **I can find patterns I missed.**
 
-| Criteria ID | Acceptance Criteria                                                                      | Status |
-| :---------- | :--------------------------------------------------------------------------------------- | :----- |
-| US1.1       | The system SHALL instantiate a CrewAI crew with at least 2 agents (Analyst, Writer).     | [ ]    |
-| US1.2       | The system SHALL pass the user's query and match context (metadata/stats) to the agents. | [ ]    |
-| US1.3       | The system SHALL return the final text output from the CrewAI execution.                 | [ ]    |
+| Criteria ID | Acceptance Criteria | Status                                                                                   |
+| :---------- | :------------------ | :--------------------------------------------------------------------------------------- | --- |
+| 20:         | US1.1               | The system SHALL instantiate a CrewAI crew with at least 2 agents (Analyst, Writer).     | [ ] |
+| 21:         | US1.2               | The system SHALL pass the user's query and match context (metadata/stats) to the agents. | [ ] |
+| 22:         | US1.3               | The system SHALL return the final text output from the CrewAI execution.                 | [ ] |
 
 ---
 
