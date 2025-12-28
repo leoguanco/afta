@@ -7,6 +7,8 @@ from .keypoint import Keypoint
 from .homography_matrix import HomographyMatrix
 from .tracking_frame import TrackingFrame, PlayerPosition, BallPosition
 from .expected_threat_grid import ExpectedThreatGrid
+from .game_phase import GamePhase
+from .phase_features import PhaseFeatures
 
 __all__ = [
     "Coordinates", 
@@ -19,5 +21,8 @@ __all__ = [
     "PlayerPosition",
     "BallPosition",
     "ExpectedThreatGrid",
+    "GamePhase",
+    "PhaseFeatures",
 ]
+
 
