@@ -35,6 +35,7 @@
 | Object Tracking   | 🟢 Implemented | [features/03_object_tracking/03_object_tracking_plan.md](features/03_object_tracking/03_object_tracking_plan.md)         |
 | Pitch Calibration | 🟢 Implemented | [features/04_pitch_calibration/04_pitch_calibration_plan.md](features/04_pitch_calibration/04_pitch_calibration_plan.md) |
 | Tactical Metrics  | 🟢 Implemented | [features/05_tactical_metrics/05_tactical_metrics_plan.md](features/05_tactical_metrics/05_tactical_metrics_plan.md)     |
+| Agentic Reasoning | 🟢 Implemented | [features/06_agentic_reasoning/06_agentic_reasoning_plan.md](features/06_agentic_reasoning/06_agentic_reasoning_plan.md) |
 
 ---
 
