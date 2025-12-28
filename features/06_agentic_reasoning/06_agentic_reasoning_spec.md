@@ -29,7 +29,8 @@
 
 - **Domain:** `AnalysisPort` (Interface).
 - **Infrastructure:**
-  - `src/infrastructure/agents/crewai_tasks.py`: Background worker calling the LLM.
+  - `src/infrastructure/worker/tasks/crewai_tasks.py`: Background worker calling the LLM.
+  - `src/infrastructure/adapters/crewai_adapter.py`: CrewAI implementation of AnalysisPort.
   - `src/infrastructure/api/endpoints/chat.py`: Initiates the async job.
 
 ### **3.2 Implementation Steps**
