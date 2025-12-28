@@ -7,6 +7,7 @@ Background tasks for data ingestion, routed to the CPU worker queue.
 import logging
 from src.infrastructure.worker.celery_app import celery_app
 from src.infrastructure.adapters.statsbomb_adapter import StatsBombAdapter
+from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,9 @@ def ingest_match_task(self, match_id: str, source: str) -> dict:
         if match is None:
             return {"status": "error", "message": f"Match {match_id} not found"}
 
-        # TODO: Save to database using PostgresMatchRepo
+        # Save to database using PostgresMatchRepo
+        repo = PostgresMatchRepo()
+        repo.save(match)
 
         logger.info(f"Ingestion complete: {len(match.events)} events")
 

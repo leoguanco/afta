@@ -7,10 +7,12 @@ Background tasks for video processing, routed to the GPU worker queue.
 import logging
 from typing import List
 import cv2
+import pandas as pd
 
 from src.infrastructure.worker.celery_app import celery_app
 from src.infrastructure.vision.yolo_detector import YOLODetector
 from src.infrastructure.vision.byte_tracker import ByteTrackerAdapter
+from src.infrastructure.storage.minio_adapter import MinIOAdapter
 from src.domain.value_objects.trajectory import Trajectory
 
 logger = logging.getLogger(__name__)
@@ -62,7 +64,25 @@ def process_video_task(self, video_path: str, output_path: str) -> dict:
 
         cap.release()
 
-        # TODO: Save trajectories to Parquet file in MinIO
+        # Save trajectories to Parquet file in MinIO
+        
+        # Convert trajectories to DataFrame
+        trajectory_data = [
+            {
+                "frame_id": traj.frame_id,
+                "object_id": traj.object_id,
+                "x": traj.x,
+                "y": traj.y,
+                "confidence": getattr(traj, 'confidence', 1.0)
+            }
+            for traj in all_trajectories
+        ]
+        df = pd.DataFrame(trajectory_data)
+        
+        # Save to MinIO
+        storage = MinIOAdapter()
+        match_id = video_path.split("/")[-1].split(".")[0]  # Extract match ID from filename
+        storage.save_parquet(f"tracking/{match_id}.parquet", df)
 
         logger.info(f"Video processing complete: {frame_id} frames, {len(all_trajectories)} trajectories")
 
