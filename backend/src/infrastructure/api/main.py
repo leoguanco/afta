@@ -103,3 +103,60 @@ async def process_video(request: VideoProcessRequest):
         "status": "PENDING",
         "message": f"Video processing job started for {request.video_path}",
     }
+
+
+class CalibrationRequest(BaseModel):
+    """Request body for pitch calibration endpoint."""
+    video_id: str
+    keypoints: list  # List of {"pixel_x", "pixel_y", "pitch_x", "pitch_y", "name"?}
+
+
+@app.post("/api/v1/calibrate")
+async def calibrate_video(request: CalibrationRequest):
+    """
+    Start an async pitch calibration job.
+    
+    Computes homography matrix from pixel-to-pitch keypoint correspondences.
+    Requires at least 4 keypoints (pitch corners or line intersections).
+    
+    Returns immediately with a job_id for status polling.
+    """
+    task = celery_app.send_task(
+        'src.infrastructure.worker.tasks.calibration_tasks.calibrate_video_task',
+        args=[request.video_id, request.keypoints]
+    )
+    
+    return {
+        "job_id": task.id,
+        "status": "PENDING",
+        "message": f"Calibration job started for video {request.video_id}",
+    }
+
+
+class MetricsRequest(BaseModel):
+    """Request body for metrics calculation endpoint."""
+    match_id: str
+    tracking_data: list = []  # Optional - will fetch from storage if empty
+    event_data: list = []
+
+
+@app.post("/api/v1/calculate-metrics")
+async def calculate_metrics(request: MetricsRequest):
+    """
+    Start an async tactical metrics calculation job.
+    
+    Calculates distances, speeds, pitch control, PPDA, etc.
+    If tracking_data is empty, fetches from storage.
+    
+    Returns immediately with a job_id for status polling.
+    """
+    task = celery_app.send_task(
+        'calculate_match_metrics',  # Uses shared_task name
+        args=[request.match_id, request.tracking_data, request.event_data]
+    )
+    
+    return {
+        "job_id": task.id,
+        "status": "PENDING",
+        "message": f"Metrics calculation started for match {request.match_id}",
+    }
