@@ -2,14 +2,13 @@ from fastapi import FastAPI
 from prometheus_client import make_asgi_app
 from pydantic import BaseModel
 
-# Lazy imports to avoid loading heavy dependencies at startup
-# from src.application.use_cases.start_ingestion import StartIngestionUseCase
-# from src.infrastructure.api.endpoints.chat import router as chat_router
+# Now safe to import - chat router no longer imports heavy dependencies
+from src.infrastructure.api.endpoints.chat import router as chat_router
 
 app = FastAPI(title="Football Intelligence Engine API", version="0.1.0")
 
-# Register routers (commented out to avoid heavy imports)
-# app.include_router(chat_router)
+# Register routers
+app.include_router(chat_router)
 
 # Observability
 metrics_app = make_asgi_app()
@@ -37,15 +36,13 @@ async def start_ingestion(request: IngestionRequest):
     """
     Start an async ingestion job.
 
-    Returns immediately with a job_id that can be polled for status.
+    Dispatches to Celery worker (where heavy dependencies exist).
     """
-    # Lazy import to avoid loading heavy dependencies at startup
-    from src.application.use_cases.start_ingestion import StartIngestionUseCase
+    from src.infrastructure.worker.tasks.ingestion_tasks import ingest_match_task
     
-    use_case = StartIngestionUseCase()
-    result = use_case.execute(request.match_id, request.source)
+    task = ingest_match_task.delay(request.match_id, request.source)
     return {
-        "job_id": result.job_id,
-        "status": result.status,
-        "message": result.message,
+        "job_id": task.id,
+        "status": "PENDING",
+        "message": f"Ingestion job started for match {request.match_id}",
     }

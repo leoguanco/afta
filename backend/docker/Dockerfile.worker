@@ -8,15 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install poetry
-RUN pip install poetry
-
-# Copy dependency definition
-COPY pyproject.toml poetry.lock* /app/
-
-# Install dependencies
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --no-root
+# Install all worker dependencies
+COPY requirements-worker.txt requirements-api.txt /app/
+RUN pip install --default-timeout=1000 --no-cache-dir -r requirements-worker.txt
 
 # Copy application code
 COPY . /app

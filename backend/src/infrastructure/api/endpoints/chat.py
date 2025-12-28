@@ -3,12 +3,10 @@ Chat API Endpoints - Infrastructure Layer
 
 API endpoints for AI analysis chat interface.
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 
-from src.application.use_cases.analyze_match import AnalyzeMatchUseCase
-from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
 from src.infrastructure.worker.celery_app import celery_app
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
@@ -35,19 +33,12 @@ class JobStatusResponse(BaseModel):
     error: Optional[str] = None
 
 
-def get_analyze_use_case() -> AnalyzeMatchUseCase:
-    """Dependency injection for AnalyzeMatchUseCase."""
-    adapter = CrewAIAdapter()
-    return AnalyzeMatchUseCase(adapter)
-
-
 @router.post("/analyze", response_model=AnalyzeResponse)
-async def start_analysis(
-    request: AnalyzeRequest,
-    use_case: AnalyzeMatchUseCase = Depends(get_analyze_use_case)
-):
+async def start_analysis(request: AnalyzeRequest):
     """
     Start an AI analysis job.
+    
+    Dispatches analysis to Celery worker (where CrewAI dependencies exist).
     
     Args:
         request: Analysis request with match_id and query
@@ -55,12 +46,16 @@ async def start_analysis(
     Returns:
         Job information with job_id for status polling
     """
-    result = use_case.execute(request.match_id, request.query)
+    # Use send_task to avoid importing the task (which imports crewai)
+    task = celery_app.send_task(
+        'src.infrastructure.worker.tasks.crewai_tasks.run_crewai_analysis_task',
+        args=[request.match_id, request.query]
+    )
     
     return AnalyzeResponse(
-        job_id=result.job_id,
-        match_id=result.match_id,
-        status=result.status
+        job_id=task.id,
+        match_id=request.match_id,
+        status='PENDING'
     )
 
 
