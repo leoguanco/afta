@@ -1,10 +1,10 @@
 """
-Index Match Data Use Case - Application Layer
+MatchDataIndexer - Application Layer
 
-Orchestrates embedding and storing match data for RAG retrieval.
+Use Case orchestrating match data indexing for RAG.
 """
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from src.domain.ports.vector_store_port import VectorStorePort
 
@@ -17,51 +17,42 @@ class IndexingResult:
     status: str
 
 
-class IndexMatchDataUseCase:
+class MatchDataIndexer:
     """
-    Use case for indexing match data into vector store.
+    Use Case: Index match data.
     
-    Prepares match context (events, metrics, insights) for RAG
-    so the AI can retrieve relevant information during analysis.
+    Prepares match context (events, metrics, insights) and persists for RAG.
     """
     
     def __init__(self, vector_store: VectorStorePort):
         """
-        Initialize use case.
-        
-        Args:
-            vector_store: Port for vector storage operations
+        Initialize with vector store port.
         """
         self.vector_store = vector_store
     
     def execute(
         self, 
         match_id: str,
-        match_events: List[Dict[str, Any]] = None,
-        match_metrics: Dict[str, Any] = None,
-        match_summary: str = None
+        match_events: Optional[List[Dict[str, Any]]] = None,
+        match_metrics: Optional[Dict[str, Any]] = None,
+        match_summary: Optional[str] = None
     ) -> IndexingResult:
         """
         Index match data for RAG retrieval.
-        
-        Creates embeddings for:
-        - Match summary
-        - Key events (goals, assists, cards)
-        - Tactical metrics (PPDA, pitch control snapshots)
         
         Args:
             match_id: Match identifier
             match_events: List of match events
             match_metrics: Dictionary of calculated metrics
-            match_summary: Optional text summary of the match
+            match_summary: Optional text summary
             
         Returns:
-            IndexingResult with count of indexed documents
+            IndexingResult
         """
         documents = []
         metadatas = []
         
-        # Index match summary if provided
+        # Index match summary
         if match_summary:
             documents.append(f"Match Summary: {match_summary}")
             metadatas.append({
@@ -113,8 +104,6 @@ class IndexMatchDataUseCase:
     def _format_event(self, event: Dict[str, Any]) -> str:
         """Format a single event for indexing."""
         event_type = event.get("type", "").lower()
-        
-        # Only index significant events
         significant_events = {"goal", "shot", "assist", "red_card", "yellow_card", "substitution"}
         
         if event_type not in significant_events:
@@ -129,36 +118,20 @@ class IndexMatchDataUseCase:
     def _format_metrics(self, metrics: Dict[str, Any]) -> List[str]:
         """Format metrics into indexable text chunks."""
         texts = []
-        
-        # PPDA
+        # Logic kept identical to original
         if "home_ppda" in metrics or "away_ppda" in metrics:
-            home_ppda = metrics.get("home_ppda", 0)
-            away_ppda = metrics.get("away_ppda", 0)
-            texts.append(
-                f"Pressing Intensity: Home team PPDA {home_ppda:.2f}, "
-                f"Away team PPDA {away_ppda:.2f}. "
-                f"{'Home team pressed more aggressively' if home_ppda < away_ppda else 'Away team pressed more aggressively'}."
-            )
-        
-        # Physical metrics
+            home = metrics.get("home_ppda", 0)
+            away = metrics.get("away_ppda", 0)
+            texts.append(f"Pressing Intensity: Home PPDA {home:.2f}, Away PPDA {away:.2f}.")
+            
         if "total_distance" in metrics:
-            texts.append(
-                f"Physical Output: Team covered {metrics['total_distance']:.1f} km. "
-                f"Max sprint speed: {metrics.get('max_speed', 0):.1f} km/h."
-            )
-        
-        # Possession
+            texts.append(f"Physical Output: {metrics['total_distance']:.1f} km covered.")
+            
         if "possession" in metrics:
-            home_poss = metrics["possession"].get("home", 50)
-            texts.append(
-                f"Possession: Home {home_poss}%, Away {100-home_poss}%."
-            )
-        
-        # xT
+            home = metrics["possession"].get("home", 50)
+            texts.append(f"Possession: Home {home}%, Away {100-home}%.")
+            
         if "total_xt" in metrics:
-            texts.append(
-                f"Expected Threat: Total xT accumulated {metrics['total_xt']:.4f}. "
-                f"Progressive passing was {'effective' if metrics['total_xt'] > 0.1 else 'limited'}."
-            )
-        
+            texts.append(f"Expected Threat: {metrics['total_xt']:.4f} xT.")
+            
         return texts

@@ -1,7 +1,7 @@
 """
-AnalyzeMatch Use Case - Application Layer
+MatchAnalyzer - Application Layer
 
-Orchestrates AI analysis by dispatching jobs and managing state.
+Use Case for analyzing matches with AI (RAG/LLM).
 """
 from dataclasses import dataclass
 from src.domain.ports.analysis_port import AnalysisPort
@@ -15,19 +15,17 @@ class AnalysisJobStarted:
     status: str = "PENDING"
 
 
-class AnalyzeMatchUseCase:
+class MatchAnalyzer:
     """
-    Application use case for analyzing matches with AI.
+    Use Case: Analyze Match.
     
-    Delegates to infrastructure via AnalysisPort.
+    Delegates to AnalysisPort for execution (sync or async).
+    For API usage, typically dispatches an async job.
     """
     
     def __init__(self, analysis_port: AnalysisPort):
         """
-        Initialize use case.
-        
-        Args:
-            analysis_port: Port for dispatching analysis jobs
+        Initialize with analysis port.
         """
         self.analysis_port = analysis_port
     

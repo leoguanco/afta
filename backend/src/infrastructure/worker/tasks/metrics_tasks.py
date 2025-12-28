@@ -7,9 +7,7 @@ from typing import List, Dict, Any
 from celery import shared_task
 
 # Application use case
-from src.application.use_cases.calculate_match_metrics import (
-    CalculateMatchMetricsUseCase
-)
+from src.application.use_cases.metrics_calculator import MetricsCalculator
 
 # Infrastructure
 from src.infrastructure.storage.metrics_repo import MetricsRepository
@@ -38,7 +36,7 @@ def calculate_match_metrics_task(
     repository = MetricsRepository()
     
     # Execute use case
-    use_case = CalculateMatchMetricsUseCase(repository)
+    use_case = MetricsCalculator(repository)
     result = use_case.execute(match_id, tracking_data, event_data)
     
     return {

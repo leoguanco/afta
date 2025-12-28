@@ -46,7 +46,7 @@
   - `src/infrastructure/ml/model_storage.py`: MinIO adapter for model persistence
   - `src/infrastructure/worker/tasks/phase_classification_tasks.py`: Async classification job
 - **Application Layer:**
-  - `src/application/use_cases/classify_match_phases.py`: Orchestrates phase classification
+  - `src/application/use_cases/phase_classifier.py`: Orchestrates phase classification
 
 ### **3.2 Implementation Steps**
 

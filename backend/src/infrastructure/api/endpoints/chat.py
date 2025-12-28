@@ -46,16 +46,19 @@ async def start_analysis(request: AnalyzeRequest):
     Returns:
         Job information with job_id for status polling
     """
-    # Use send_task to avoid importing the task (which imports crewai)
-    task = celery_app.send_task(
-        'src.infrastructure.worker.tasks.crewai_tasks.run_crewai_analysis_task',
-        args=[request.match_id, request.query]
-    )
+    # Use Case: MatchAnalyzer
+    from src.infrastructure.adapters.celery_analysis_dispatcher import CeleryAnalysisDispatcher
+    from src.application.use_cases.match_analyzer import MatchAnalyzer
+    
+    dispatcher = CeleryAnalysisDispatcher()
+    use_case = MatchAnalyzer(dispatcher)
+    
+    result = use_case.execute(request.match_id, request.query)
     
     return AnalyzeResponse(
-        job_id=task.id,
-        match_id=request.match_id,
-        status='PENDING'
+        job_id=result.job_id,
+        match_id=result.match_id,
+        status=result.status
     )
 
 

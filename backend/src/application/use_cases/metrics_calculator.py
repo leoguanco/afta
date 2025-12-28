@@ -1,7 +1,8 @@
 """
-Calculate Match Metrics Use Case - Application Layer
+MetricsCalculator - Application Layer
 
-Orchestrates the calculation of all tactical metrics for a match.
+Use Case for calculating tactical metrics for a match.
+Follows "Feature + Action + er" naming convention.
 """
 from dataclasses import dataclass
 from typing import List, Dict, Any
@@ -22,19 +23,22 @@ class MetricsResult:
     status: str = "completed"
 
 
-class CalculateMatchMetricsUseCase:
+class MetricsCalculator:
     """
-    Application use case for calculating all tactical metrics.
+    Use Case: Calculate match metrics.
     
-    Orchestrates domain entities and persists results via repository port.
+    Orchestrates:
+    1. Parsing raw tracking/event data into Domain Entities.
+    2. Calculating physical, pitch control, and tactical metrics via Entities.
+    3. Persisting results via MetricsRepository.
     """
     
     def __init__(self, metrics_repository: MetricsRepository):
         """
-        Initialize use case.
+        Initialize with injected repository.
         
         Args:
-            metrics_repository: Repository port for persisting metrics
+            metrics_repository: Port for persisting metrics
         """
         self.metrics_repository = metrics_repository
     
@@ -45,17 +49,17 @@ class CalculateMatchMetricsUseCase:
         event_data: List[Dict[str, Any]]
     ) -> MetricsResult:
         """
-        Execute the use case to calculate all metrics.
+        Execute metrics calculation.
         
         Args:
             match_id: Match identifier
-            tracking_data: Raw tracking data (list of frame positions)
+            tracking_data: Raw tracking data
             event_data: Raw event data
             
         Returns:
-            MetricsResult with calculation summary
+            MetricsResult summary
         """
-        # Process physical metrics (per player)
+        # 1. Physical Metrics
         player_trajectories = self._build_player_trajectories(tracking_data)
         for trajectory in player_trajectories:
             metrics = trajectory.calculate_physical_metrics()
@@ -69,7 +73,7 @@ class CalculateMatchMetricsUseCase:
                 avg_speed=metrics.avg_speed
             )
         
-        # Process pitch control (sampled frames)
+        # 2. Pitch Control
         match_frames = self._build_match_frames(tracking_data, sample_rate=25)
         for frame in match_frames:
             pitch_control = frame.calculate_pitch_control()
@@ -81,7 +85,7 @@ class CalculateMatchMetricsUseCase:
                 away_control=pitch_control.away_control
             )
         
-        # Process tactical metrics (PPDA, pressing)
+        # 3. Tactical Metrics (PPDA)
         tactical_match = self._build_tactical_match(match_id, event_data)
         
         ppda_home = tactical_match.calculate_ppda("home", "away")
@@ -131,7 +135,6 @@ class CalculateMatchMetricsUseCase:
                 player_frames_dict[player_id] = []
             player_frames_dict[player_id].append(frame)
         
-        # Create entities
         return [
             PlayerTrajectory(player_id, frames)
             for player_id, frames in player_frames_dict.items()
@@ -143,7 +146,6 @@ class CalculateMatchMetricsUseCase:
         sample_rate: int = 25
     ) -> List[MatchFrame]:
         """Build MatchFrame entities from raw data (sampled)."""
-        # Group by frame_id
         frames_dict: Dict[int, List[Dict[str, Any]]] = {}
         
         for data in tracking_data:
@@ -152,7 +154,6 @@ class CalculateMatchMetricsUseCase:
                 frames_dict[frame_id] = []
             frames_dict[frame_id].append(data)
         
-        # Sample and create entities
         match_frames = []
         for frame_id in sorted(frames_dict.keys()):
             if frame_id % sample_rate != 0:
@@ -170,9 +171,7 @@ class CalculateMatchMetricsUseCase:
                 for d in frames_dict[frame_id]
             ]
             
-            # Assume ball at center if not provided
             ball = BallPosition(x=52.5, y=34.0)
-            
             match_frames.append(MatchFrame(frame_id, players, ball))
         
         return match_frames

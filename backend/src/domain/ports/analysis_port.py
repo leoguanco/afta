@@ -25,3 +25,17 @@ class AnalysisPort(ABC):
             Analysis result as string
         """
         pass
+
+    @abstractmethod
+    def dispatch_analysis(self, match_id: str, query: str) -> str:
+        """
+        Dispatch asynchronous AI analysis job.
+        
+        Args:
+            match_id: Match identifier
+            query: User's analysis query
+            
+        Returns:
+            Job ID of the dispatched task
+        """
+        pass

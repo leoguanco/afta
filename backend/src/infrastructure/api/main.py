@@ -90,13 +90,18 @@ async def start_ingestion(request: IngestionRequest):
 
     Dispatches to Celery worker (where heavy dependencies exist).
     """
-    from src.infrastructure.worker.tasks.ingestion_tasks import ingest_match_task
+    # Use Case: MatchIngester
+    from src.infrastructure.adapters.celery_ingestion_dispatcher import CeleryIngestionDispatcher
+    from src.application.use_cases.match_ingester import MatchIngester
     
-    task = ingest_match_task.delay(request.match_id, request.source)
+    dispatcher = CeleryIngestionDispatcher()
+    use_case = MatchIngester(dispatcher)
+    
+    result = use_case.execute(request.match_id, request.source)
     return {
-        "job_id": task.id,
-        "status": "PENDING",
-        "message": f"Ingestion job started for match {request.match_id}",
+        "job_id": result.job_id,
+        "status": result.status,
+        "message": result.message,
     }
 
 
@@ -118,16 +123,19 @@ async def process_video(request: VideoProcessRequest):
     
     Returns immediately with a job_id for status polling.
     """
-    # Use send_task to avoid importing vision_tasks (has cv2 dependency)
-    task = celery_app.send_task(
-        'src.infrastructure.worker.tasks.vision_tasks.process_video_task',
-        args=[request.video_path, request.output_path]
-    )
+    # Use Case: VideoProcessor
+    from src.infrastructure.adapters.celery_video_dispatcher import CeleryVideoDispatcher
+    from src.application.use_cases.video_processor import VideoProcessor
+    
+    dispatcher = CeleryVideoDispatcher()
+    use_case = VideoProcessor(dispatcher)
+    
+    result = use_case.execute(request.video_path, request.output_path)
     
     return {
-        "job_id": task.id,
-        "status": "PENDING",
-        "message": f"Video processing job started for {request.video_path}",
+        "job_id": result.job_id,
+        "status": result.status,
+        "message": result.message,
     }
 
 
@@ -147,15 +155,19 @@ async def calibrate_video(request: CalibrationRequest):
     
     Returns immediately with a job_id for status polling.
     """
-    task = celery_app.send_task(
-        'src.infrastructure.worker.tasks.calibration_tasks.calibrate_video_task',
-        args=[request.video_id, request.keypoints]
-    )
+    # Use Case: VideoCalibrator
+    from src.infrastructure.adapters.celery_calibration_dispatcher import CeleryCalibrationDispatcher
+    from src.application.use_cases.video_calibrator import VideoCalibrator
+    
+    dispatcher = CeleryCalibrationDispatcher()
+    use_case = VideoCalibrator(dispatcher)
+    
+    result = use_case.execute(request.video_id, request.keypoints)
     
     return {
-        "job_id": task.id,
-        "status": "PENDING",
-        "message": f"Calibration job started for video {request.video_id}",
+        "job_id": result.job_id,
+        "status": result.status,
+        "message": result.message,
     }
 
 
