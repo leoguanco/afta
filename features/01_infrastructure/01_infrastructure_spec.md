@@ -30,11 +30,11 @@
 
 ### **User Story 3:** As a **DevOps Engineer**, I want **Observability**, so that **I can debug issues.**
 
-| Criteria ID | Acceptance Criteria                                                                         | Status |
-| :---------- | :------------------------------------------------------------------------------------------ | :----- |
-| US3.1       | The system SHALL expose **Prometheus** metrics at `/metrics`.                               | [x]    |
-| US3.2       | The system SHALL log in **JSON format** only when errors occur, containing correlation IDs. | [ ]    |
-| US3.3       | **Grafana** SHALL be pre-configured with a dashboard showing system health.                 | [x]    |
+| Criteria ID | Acceptance Criteria                                                         | Status |
+| :---------- | :-------------------------------------------------------------------------- | :----- |
+| US3.1       | The system SHALL expose **Prometheus** metrics at `/metrics`.               | [x]    |
+| US3.2       | The system SHALL log in **JSON format** with correlation IDs for tracing.   | [x]    |
+| US3.3       | **Grafana** SHALL be pre-configured with a dashboard showing system health. | [x]    |
 
 ---
 

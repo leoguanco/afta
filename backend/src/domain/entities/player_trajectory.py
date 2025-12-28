@@ -236,5 +236,66 @@ class PlayerTrajectory:
         kernel = np.ones(window) / window
         return np.convolve(signal, kernel, mode='same')
     
+    def flag_outliers(self, max_speed_kmh: float = 36.0) -> List[int]:
+        """
+        Flag frames with unrealistic speed values.
+        
+        Per spec: Speed > 36km/h should be flagged or clipped.
+        Usain Bolt's max is ~44km/h, so 36km/h is a reasonable threshold
+        for sustained football player movement.
+        
+        Args:
+            max_speed_kmh: Maximum realistic speed in km/h
+            
+        Returns:
+            List of frame IDs with outlier speeds
+        """
+        velocities = self._get_velocities()
+        threshold_ms = max_speed_kmh / 3.6
+        
+        outlier_frames = []
+        for i, velocity in enumerate(velocities):
+            if velocity > threshold_ms:
+                outlier_frames.append(self.frames[i].frame_id)
+        
+        return outlier_frames
+    
+    def clip_outliers(self, max_speed_kmh: float = 36.0) -> None:
+        """
+        Clip unrealistic speed values by adjusting positions.
+        
+        This modifies the trajectory in-place to limit maximum
+        displacement between frames.
+        
+        Args:
+            max_speed_kmh: Maximum speed to allow
+        """
+        max_displacement = (max_speed_kmh / 3.6) / self.fps
+        
+        for i in range(1, len(self.frames)):
+            prev = self.frames[i-1]
+            curr = self.frames[i]
+            
+            dx = curr.x - prev.x
+            dy = curr.y - prev.y
+            distance = (dx**2 + dy**2) ** 0.5
+            
+            if distance > max_displacement and distance > 0:
+                # Scale down movement to max allowed
+                scale = max_displacement / distance
+                # Create new frame with clipped position
+                # Note: frames list needs to be mutable for this
+                self.frames[i] = TrajectoryFrame(
+                    frame_id=curr.frame_id,
+                    x=prev.x + dx * scale,
+                    y=prev.y + dy * scale,
+                    timestamp=curr.timestamp
+                )
+        
+        # Invalidate cached calculations
+        self._velocities = None
+        self._metrics = None
+    
     def __repr__(self) -> str:
         return f"PlayerTrajectory(player_id={self.player_id}, frames={len(self.frames)})"
+
