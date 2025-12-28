@@ -20,7 +20,7 @@ class MatchModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     match_id = Column(String, unique=True, nullable=False, index=True)
     source = Column(String, nullable=False)  # 'statsbomb', 'metrica', etc.
-    metadata = Column(JSON, nullable=True)  # Additional match metadata
+    match_metadata = Column(JSON, nullable=True)  # Additional match metadata
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationship to events
@@ -41,7 +41,7 @@ class EventModel(Base):
     timestamp = Column(Float, nullable=False)  # Seconds from match start
     x = Column(Float, nullable=False)  # Metric coordinates (0-105m)
     y = Column(Float, nullable=False)  # Metric coordinates (0-68m)
-    metadata = Column(JSON, nullable=True)  # Additional event-specific data
+    event_metadata = Column(JSON, nullable=True)  # Additional event-specific data
     
     # Relationship to match
     match = relationship("MatchModel", back_populates="events")

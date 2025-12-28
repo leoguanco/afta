@@ -1,26 +1,27 @@
 """
 AnalysisPort - Domain Layer
 
-Port for dispatching AI analysis jobs to background workers.
+Port for running AI analysis on match data.
 """
 from abc import ABC, abstractmethod
 
 
 class AnalysisPort(ABC):
     """
-    Port for dispatching analysis jobs to AI workers.
+    Port for running AI analysis on match data.
     """
     
     @abstractmethod
-    def dispatch_analysis(self, match_id: str, query: str) -> str:
+    def run_analysis(self, match_id: str, query: str, match_context: str = "") -> str:
         """
-        Dispatch an analysis job.
+        Run synchronous AI analysis.
         
         Args:
             match_id: Match identifier to analyze
             query: User's analysis query
+            match_context: Additional match context/statistics
             
         Returns:
-            Job ID (task ID)
+            Analysis result as string
         """
         pass

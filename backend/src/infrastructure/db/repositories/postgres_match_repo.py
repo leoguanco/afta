@@ -65,16 +65,16 @@ class PostgresMatchRepo(MatchRepository):
                     event_type=event_type,
                     timestamp=event_model.timestamp,
                     coordinates=coordinates,
-                    player_id=event_model.metadata.get("player_id", "unknown") if event_model.metadata else "unknown",
-                    team_id=event_model.metadata.get("team_id") if event_model.metadata else None
+                    player_id=event_model.event_metadata.get("player_id", "unknown") if event_model.event_metadata else "unknown",
+                    team_id=event_model.event_metadata.get("team_id") if event_model.event_metadata else None
                 )
                 events.append(event)
             
             # Reconstruct Match aggregate
             return Match(
                 match_id=match_model.match_id,
-                home_team_id=match_model.metadata.get("home_team_id", "unknown") if match_model.metadata else "unknown",
-                away_team_id=match_model.metadata.get("away_team_id", "unknown") if match_model.metadata else "unknown",
+                home_team_id=match_model.match_metadata.get("home_team_id", "unknown") if match_model.match_metadata else "unknown",
+                away_team_id=match_model.match_metadata.get("away_team_id", "unknown") if match_model.match_metadata else "unknown",
                 events=events
             )
         finally:
@@ -112,7 +112,7 @@ class PostgresMatchRepo(MatchRepository):
                 match_model = MatchModel(
                     match_id=match.match_id,
                     source="statsbomb",  # Default source, can be overridden via Match metadata if needed
-                    metadata=match_metadata
+                    match_metadata=match_metadata
                 )
                 session.add(match_model)
                 
@@ -129,11 +129,11 @@ class PostgresMatchRepo(MatchRepository):
                     
                     event_model = EventModel(
                         match_id=match.match_id,
-                        event_type=event.event_type.value,
+                        event_type=event.event_type.value if hasattr(event.event_type, 'value') else event.event_type,
                         timestamp=event.timestamp,
                         x=event.coordinates.x,
                         y=event.coordinates.y,
-                        metadata=event_metadata
+                        event_metadata=event_metadata
                     )
                     session.add(event_model)
             

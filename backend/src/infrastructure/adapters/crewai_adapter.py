@@ -9,7 +9,6 @@ from langchain_openai import ChatOpenAI
 import os
 
 from src.domain.ports.analysis_port import AnalysisPort
-from src.infrastructure.worker.tasks.crewai_tasks import run_crewai_analysis_task
 
 
 class CrewAIAdapter(AnalysisPort):
@@ -133,17 +132,3 @@ MATCH CONTEXT AND STATISTICS:
         
         result = crew.kickoff()
         return str(result)
-    
-    def dispatch_analysis(self, match_id: str, query: str) -> str:
-        """
-        Dispatch analysis job to Celery worker.
-        
-        Args:
-            match_id: Match identifier
-            query: User's analysis query
-            
-        Returns:
-            Job ID (Celery task ID)
-        """
-        task = run_crewai_analysis_task.delay(match_id, query)
-        return task.id
