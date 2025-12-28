@@ -29,13 +29,14 @@
 
 ## Implementation Plans
 
-| Feature           | Status         | Link                                                                                                                     |
-| :---------------- | :------------- | :----------------------------------------------------------------------------------------------------------------------- |
-| Data Ingestion    | 🟢 Implemented | [features/02_data_ingestion/02_data_ingestion_plan.md](features/02_data_ingestion/02_data_ingestion_plan.md)             |
-| Object Tracking   | 🟢 Implemented | [features/03_object_tracking/03_object_tracking_plan.md](features/03_object_tracking/03_object_tracking_plan.md)         |
-| Pitch Calibration | 🟢 Implemented | [features/04_pitch_calibration/04_pitch_calibration_plan.md](features/04_pitch_calibration/04_pitch_calibration_plan.md) |
-| Tactical Metrics  | 🟢 Implemented | [features/05_tactical_metrics/05_tactical_metrics_plan.md](features/05_tactical_metrics/05_tactical_metrics_plan.md)     |
-| Agentic Reasoning | 🟢 Implemented | [features/06_agentic_reasoning/06_agentic_reasoning_plan.md](features/06_agentic_reasoning/06_agentic_reasoning_plan.md) |
+| Feature           | Status         | Link                                                                                                                                                                                                                                              |
+| :---------------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Data Ingestion    | 🟢 Implemented | [features/02_data_ingestion/02_data_ingestion_plan.md](features/02_data_ingestion/02_data_ingestion_plan.md)                                                                                                                                      |
+| Object Tracking   | 🟢 Implemented | [features/03_object_tracking/03_object_tracking_plan.md](features/03_object_tracking/03_object_tracking_plan.md)                                                                                                                                  |
+| Pitch Calibration | 🟢 Implemented | [features/04_pitch_calibration/04_pitch_calibration_plan.md](features/04_pitch_calibration/04_pitch_calibration_plan.md)                                                                                                                          |
+| Tactical Metrics  | 🟢 Implemented | [features/05_tactical_metrics/05_tactical_metrics_plan.md](features/05_tactical_metrics/05_tactical_metrics_plan.md)                                                                                                                              |
+| Agentic Reasoning | 🟢 Implemented | [features/06_agentic_reasoning/06_agentic_reasoning_plan.md](features/06_agentic_reasoning/06_agentic_reasoning_plan.md)                                                                                                                          |
+| **Delta Specs**   | 🟡 Pending     | [Ingestion Persistence](features/02_data_ingestion/02a_ingestion_persistence_spec.md), [Tracking Persistence](features/03_object_tracking/03a_tracking_persistence_spec.md), [CrewAI Impl](features/06_agentic_reasoning/06a_crewai_impl_spec.md) |
 
 ---
 
