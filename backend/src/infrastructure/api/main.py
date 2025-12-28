@@ -28,7 +28,33 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "db": "unknown", "redis": "unknown"}
+    """Health check endpoint with real connectivity tests."""
+    health_status = {"status": "ok"}
+    
+    # Check database connectivity
+    try:
+        from src.infrastructure.db.database import engine
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        health_status["db"] = "ok"
+    except Exception as e:
+        health_status["db"] = f"error: {str(e)}"
+        health_status["status"] = "degraded"
+    
+    # Check Redis connectivity
+    try:
+        from redis import Redis
+        import os
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        redis_client = Redis.from_url(redis_url, socket_connect_timeout=2)
+        redis_client.ping()
+        health_status["redis"] = "ok"
+    except Exception as e:
+        health_status["redis"] = f"error: {str(e)}"
+        health_status["status"] = "degraded"
+    
+    return health_status
 
 
 @app.post("/api/v1/ingest")
@@ -45,4 +71,35 @@ async def start_ingestion(request: IngestionRequest):
         "job_id": task.id,
         "status": "PENDING",
         "message": f"Ingestion job started for match {request.match_id}",
+    }
+
+
+class VideoProcessRequest(BaseModel):
+    """Request body for video processing endpoint."""
+    video_path: str
+    output_path: str
+
+
+@app.post("/api/v1/process-video")
+async def process_video(request: VideoProcessRequest):
+    """
+    Start an async video processing job (GPU worker).
+    
+    This endpoint dispatches to the GPU worker which runs:
+    - YOLO object detection
+    - ByteTrack multi-object tracking
+    - Trajectory extraction
+    
+    Returns immediately with a job_id for status polling.
+    """
+    # Use send_task to avoid importing vision_tasks (has cv2 dependency)
+    task = celery_app.send_task(
+        'src.infrastructure.worker.tasks.vision_tasks.process_video_task',
+        args=[request.video_path, request.output_path]
+    )
+    
+    return {
+        "job_id": task.id,
+        "status": "PENDING",
+        "message": f"Video processing job started for {request.video_path}",
     }
