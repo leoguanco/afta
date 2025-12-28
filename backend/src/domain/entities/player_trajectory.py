@@ -181,8 +181,8 @@ class PlayerTrajectory:
         # Velocity magnitude
         velocity = np.sqrt(dx**2 + dy**2) / dt
         
-        # Smooth using moving average
-        velocity_smoothed = self._smooth_signal(velocity, window=5)
+        # Smooth using Savitzky-Golay filter (better preserves signal shape)
+        velocity_smoothed = self._smooth_signal_savgol(velocity, window_length=11, polyorder=3)
         
         # Pad to match input size
         velocity_smoothed = np.append(velocity_smoothed, velocity_smoothed[-1])
@@ -190,8 +190,46 @@ class PlayerTrajectory:
         self._velocities = velocity_smoothed
         return self._velocities
     
-    def _smooth_signal(self, signal: np.ndarray, window: int = 5) -> np.ndarray:
-        """Smooth signal using moving average."""
+    def _smooth_signal_savgol(
+        self, 
+        signal: np.ndarray, 
+        window_length: int = 11, 
+        polyorder: int = 3
+    ) -> np.ndarray:
+        """
+        Smooth signal using Savitzky-Golay filter.
+        
+        Savitzky-Golay is preferred for velocity data because it:
+        - Preserves local maxima/minima (important for sprint detection)
+        - Maintains signal shape during acceleration/deceleration
+        - Has better frequency response than moving average
+        
+        Args:
+            signal: Input signal array
+            window_length: Must be odd, larger = smoother (default 11 = ~0.4s at 25fps)
+            polyorder: Polynomial order (lower = smoother, default 3)
+            
+        Returns:
+            Smoothed signal array
+        """
+        from scipy.signal import savgol_filter
+        
+        # Window length must be odd and >= polyorder + 2
+        min_length = polyorder + 2
+        if len(signal) < min_length:
+            # Fallback to simple smoothing for very short signals
+            return self._smooth_signal_moving_avg(signal, window=3)
+        
+        # Ensure window_length is valid
+        actual_window = min(window_length, len(signal))
+        if actual_window % 2 == 0:
+            actual_window -= 1  # Make odd
+        actual_window = max(actual_window, polyorder + 2)
+        
+        return savgol_filter(signal, actual_window, polyorder)
+    
+    def _smooth_signal_moving_avg(self, signal: np.ndarray, window: int = 5) -> np.ndarray:
+        """Fallback: Smooth signal using moving average."""
         if len(signal) < window:
             return signal
         

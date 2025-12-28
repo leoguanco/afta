@@ -84,8 +84,9 @@ def process_video_task(self, video_path: str, output_path: str) -> dict:
         try:
             storage = MinIOAdapter()
             match_id = video_path.split("/")[-1].split(".")[0]  # Extract match ID from filename
-            storage.save_parquet(f"tracking/{match_id}.parquet", df)
-            logger.info(f"Successfully uploaded trajectory data to MinIO: tracking/{match_id}.parquet")
+            trajectory_key = f"tracking/{match_id}.parquet"
+            storage.save_parquet(trajectory_key, df)
+            logger.info(f"Successfully uploaded trajectory data to MinIO: {trajectory_key}")
         except S3Error as s3_err:
             logger.error(f"MinIO S3 error during upload: {s3_err}")
             # Re-raise to trigger Celery retry mechanism
@@ -96,11 +97,36 @@ def process_video_task(self, video_path: str, output_path: str) -> dict:
 
         logger.info(f"Video processing complete: {frame_id} frames, {len(all_trajectories)} trajectories")
 
+        # Emit domain event for tracking completion
+        from src.domain.events.tracking_completed import TrackingCompletedEvent
+        
+        tracking_event = TrackingCompletedEvent(
+            aggregate_id=match_id,
+            match_id=match_id,
+            video_path=video_path,
+            trajectory_path=trajectory_key,
+            frames_processed=frame_id,
+            players_detected=len(set(t.object_id for t in all_trajectories))
+        )
+        
+        logger.info(f"Emitted TrackingCompletedEvent: {tracking_event.event_id}")
+        
+        # Chain to metrics calculation task automatically
+        from src.infrastructure.worker.celery_app import celery_app
+        celery_app.send_task(
+            'calculate_match_metrics',
+            args=[match_id, trajectory_data, []],  # tracking_data, event_data (empty for now)
+            countdown=2  # Small delay to ensure trajectory is saved
+        )
+        logger.info(f"Chained metrics calculation for match {match_id}")
+
         return {
             "status": "success",
             "video_path": video_path,
             "frame_count": frame_id,
             "trajectory_count": len(all_trajectories),
+            "event_id": tracking_event.event_id,
+            "metrics_triggered": True
         }
 
     except S3Error as s3_exc:
@@ -109,3 +135,4 @@ def process_video_task(self, video_path: str, output_path: str) -> dict:
     except Exception as exc:
         logger.error(f"Video processing failed: {exc}")
         raise self.retry(exc=exc, countdown=5)
+
