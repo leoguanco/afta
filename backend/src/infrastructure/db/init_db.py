@@ -6,7 +6,13 @@ Run with: python -m src.infrastructure.db.init_db
 """
 import asyncio
 from src.infrastructure.db.database import engine, Base
-from src.infrastructure.db.models import MatchModel, EventModel
+from src.infrastructure.db.models import (
+    MatchModel, 
+    EventModel, 
+    PhaseSequenceModel, 
+    FramePhaseModel, 
+    PhaseTransitionModel
+)
 
 def init_db():
     """Create database tables."""

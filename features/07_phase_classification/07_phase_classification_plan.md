@@ -12,7 +12,7 @@ This plan details the implementation of the Game Phase Classification feature as
 - [x] Feature Extraction
 - [x] Infrastructure Layer (ML adapter, Celery task)
 - [x] Application Layer (use case)
-- [ ] API Endpoints
+- [x] API Endpoints
 - [x] Tests
 
 ## Proposed Changes
