@@ -1,22 +1,17 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
+    build-essential \
     libpq-dev \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install poetry
-RUN pip install poetry
-
-# Copy dependency definition
-COPY pyproject.toml poetry.lock* /app/
-
-# Install dependencies (no dev)
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --no-root
+# Install pip dependencies explicitly to avoid Poetry resolution issues in Docker
+COPY requirements.txt /app/
+RUN pip install --default-timeout=1000 --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . /app
