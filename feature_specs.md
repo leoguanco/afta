@@ -39,28 +39,34 @@
 
 ## Detailed Specifications
 
-| Module                | Description                                     | Link                                                                                                                                                                                                                                           |
-| :-------------------- | :---------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Infrastructure**    | Docker, Hexagonal structure, TDD, Observability | [features/01_infrastructure/01_infrastructure_spec.md](features/01_infrastructure/01_infrastructure_spec.md)                                                                                                                                   |
-| **Data Ingestion**    | StatsBomb, Metrica, Async Workers               | [features/02_data_ingestion/02_data_ingestion_spec.md](features/02_data_ingestion/02_data_ingestion_spec.md)                                                                                                                                   |
-| **Object Tracking**   | YOLOv8, ByteTrack, Vision Worker                | [features/03_object_tracking/03_object_tracking_spec.md](features/03_object_tracking/03_object_tracking_spec.md)                                                                                                                               |
-| **Pitch Calibration** | Homography, Keypoint Detection                  | [features/04_pitch_calibration/04_pitch_calibration_spec.md](features/04_pitch_calibration/04_pitch_calibration_spec.md)                                                                                                                       |
-| **Tactical Metrics**  | Pitch Control, xT, PPDA, Physical Load          | [features/05_tactical_metrics/05_tactical_metrics_spec.md](features/05_tactical_metrics/05_tactical_metrics_spec.md) <br> [features/05_tactical_metrics/05_tactical_metrics_plan.md](features/05_tactical_metrics/05_tactical_metrics_plan.md) |
-| **Agentic Reasoning** | RAG, CrewAI, LLM Analysis                       | [features/06_agentic_reasoning/06_agentic_reasoning_spec.md](features/06_agentic_reasoning/06_agentic_reasoning_spec.md)                                                                                                                       |
-| **UI Dashboard**      | Next.js, Interactive Pitch, Video Sync          | [features/ui_dashboard/ui_dashboard_spec.md](features/ui_dashboard/ui_dashboard_spec.md)                                                                                                                                                       |
+| Module                   | Description                                     | Link                                                                                                                                 |
+| :----------------------- | :---------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+| **Infrastructure**       | Docker, Hexagonal structure, TDD, Observability | [features/01_infrastructure/01_infrastructure_spec.md](features/01_infrastructure/01_infrastructure_spec.md)                         |
+| **Data Ingestion**       | StatsBomb, Metrica, Async Workers               | [features/02_data_ingestion/02_data_ingestion_spec.md](features/02_data_ingestion/02_data_ingestion_spec.md)                         |
+| **Object Tracking**      | YOLOv8, ByteTrack, Vision Worker                | [features/03_object_tracking/03_object_tracking_spec.md](features/03_object_tracking/03_object_tracking_spec.md)                     |
+| **Pitch Calibration**    | Homography, Keypoint Detection                  | [features/04_pitch_calibration/04_pitch_calibration_spec.md](features/04_pitch_calibration/04_pitch_calibration_spec.md)             |
+| **Tactical Metrics**     | Pitch Control, xT, PPDA, Physical Load          | [features/05_tactical_metrics/05_tactical_metrics_spec.md](features/05_tactical_metrics/05_tactical_metrics_spec.md)                 |
+| **Agentic Reasoning**    | RAG, CrewAI, LLM Analysis                       | [features/06_agentic_reasoning/06_agentic_reasoning_spec.md](features/06_agentic_reasoning/06_agentic_reasoning_spec.md)             |
+| **Phase Classification** | ML-based 4-phase game state detection           | [features/07_phase_classification/07_phase_classification_spec.md](features/07_phase_classification/07_phase_classification_spec.md) |
+| **Report Generation**    | PDF/JSON export with charts and LLM narrative   | [features/08_report_generation/08_report_generation_spec.md](features/08_report_generation/08_report_generation_spec.md)             |
+| **Pattern Detection**    | Unsupervised ML clustering of tactical patterns | [features/09_pattern_detection/09_pattern_detection_spec.md](features/09_pattern_detection/09_pattern_detection_spec.md)             |
+| **UI Dashboard**         | Next.js, Interactive Pitch, Video Sync          | [features/ui_dashboard/ui_dashboard_spec.md](features/ui_dashboard/ui_dashboard_spec.md)                                             |
 
 ---
 
 ## Implementation Status
 
-| Feature           | Status         | API Endpoint                | Notes                          |
-| :---------------- | :------------- | :-------------------------- | :----------------------------- |
-| Data Ingestion    | 🟢 Implemented | `/api/v1/ingest`            | StatsBomb adapter complete     |
-| Object Tracking   | 🟢 Implemented | `/api/v1/process-video`     | YOLO + ByteTrack on GPU worker |
-| Pitch Calibration | 🟢 Implemented | `/api/v1/calibrate`         | OpenCV homography computation  |
-| Tactical Metrics  | 🟢 Implemented | `/api/v1/calculate-metrics` | Rich domain entities           |
-| Agentic Reasoning | 🟢 Implemented | `/api/v1/chat/analyze`      | CrewAI multi-agent system      |
-| Health Monitoring | 🟢 Implemented | `/health`                   | Real DB/Redis connectivity     |
+| Feature              | Status         | API Endpoint                  | Notes                          |
+| :------------------- | :------------- | :---------------------------- | :----------------------------- |
+| Data Ingestion       | 🟢 Implemented | `/api/v1/ingest`              | StatsBomb adapter complete     |
+| Object Tracking      | 🟢 Implemented | `/api/v1/process-video`       | YOLO + ByteTrack on GPU worker |
+| Pitch Calibration    | 🟢 Implemented | `/api/v1/calibrate`           | OpenCV homography computation  |
+| Tactical Metrics     | 🟢 Implemented | `/api/v1/calculate-metrics`   | Rich domain entities           |
+| Agentic Reasoning    | 🟢 Implemented | `/api/v1/chat/analyze`        | CrewAI multi-agent system      |
+| Health Monitoring    | 🟢 Implemented | `/health`                     | Real DB/Redis connectivity     |
+| Phase Classification | 🟡 Planned     | `/api/v1/matches/{id}/phases` | ML 4-phase classification      |
+| Report Generation    | 🟡 Planned     | `/api/v1/reports/generate`    | PDF/JSON export with charts    |
+| Pattern Detection    | 🟡 Planned     | `/api/v1/patterns/detect`     | Unsupervised ML clustering     |
 
 ### Architecture Improvements (Recent)
 

@@ -130,6 +130,9 @@ Feature specifications in `features/` directory:
 - [Pitch Calibration](features/04_pitch_calibration/04_pitch_calibration_spec.md)
 - [Tactical Metrics](features/05_tactical_metrics/05_tactical_metrics_spec.md)
 - [Agentic Reasoning](features/06_agentic_reasoning/06_agentic_reasoning_spec.md)
+- [Phase Classification](features/07_phase_classification/07_phase_classification_spec.md) 🆕
+- [Report Generation](features/08_report_generation/08_report_generation_spec.md) 🆕
+- [Pattern Detection](features/09_pattern_detection/09_pattern_detection_spec.md) 🆕
 - [UI Dashboard](features/ui_dashboard/ui_dashboard_spec.md)
 
 ---
