@@ -15,7 +15,7 @@ celery_app = Celery(
     "afta_worker",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["src.infrastructure.worker.tasks.ingestion_tasks"],
+    # include=[]  # Removed to avoid API importing worker tasks
 )
 
 # Celery configuration
@@ -25,9 +25,9 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
-    # Task routing
     task_routes={
-        "src.infrastructure.worker.tasks.ingestion_tasks.*": {"queue": "default"},
-        "src.infrastructure.worker.tasks.vision_tasks.*": {"queue": "gpu_queue"},
+        "ingestion_tasks.*": {"queue": "default"},
+        "vision_tasks.*": {"queue": "gpu_queue"},
+        "run_crewai_analysis": {"queue": "default"},
     },
 )

@@ -15,3 +15,7 @@ redis>=5.0.0
 
 # Observability
 prometheus-client>=0.19.0
+
+# Dependencies required for some Use Case imports (even if logic is minimal)
+numpy>=1.26.0
+statsbombpy>=1.13.0

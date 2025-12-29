@@ -21,7 +21,7 @@ class CeleryAnalysisDispatcher(AnalysisPort):
         """
         # Using string name to resolve task
         task = celery_app.send_task(
-            'src.infrastructure.worker.tasks.crewai_tasks.run_crewai_analysis_task',
+            'run_crewai_analysis',
             args=[match_id, query]
         )
         return task.id

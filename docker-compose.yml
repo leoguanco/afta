@@ -100,7 +100,9 @@ services:
       context: ./backend
       dockerfile: docker/Dockerfile.worker
     container_name: afta-worker-cpu
-    command: celery -A src.infrastructure.worker.celery_app worker -Q default -l info
+    command: >
+      celery -A src.infrastructure.worker.celery_app worker -Q default -l info
+      --include src.infrastructure.worker.tasks.ingestion_tasks,src.infrastructure.worker.tasks.report_tasks,src.infrastructure.worker.tasks.phase_classification_tasks,src.infrastructure.worker.tasks.pattern_detection_tasks,src.infrastructure.worker.tasks.metrics_tasks,src.infrastructure.worker.tasks.crewai_tasks,src.infrastructure.worker.tasks.calibration_tasks
     volumes:
       - ./backend:/app
     environment:
@@ -123,7 +125,9 @@ services:
       context: ./backend
       dockerfile: docker/Dockerfile.gpu
     container_name: afta-worker-gpu
-    command: celery -A src.infrastructure.worker.celery_app worker -Q gpu_queue -l info
+    command: >
+      celery -A src.infrastructure.worker.celery_app worker -Q gpu_queue -l info
+      --include src.infrastructure.worker.tasks.vision_tasks
     deploy:
       resources:
         reservations:

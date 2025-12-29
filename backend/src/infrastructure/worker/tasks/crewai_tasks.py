@@ -24,7 +24,7 @@ llm_tokens_total = Counter(
 )
 
 
-@shared_task(name="run_crewai_analysis", queue="general")
+@shared_task(name="run_crewai_analysis", queue="default")
 def run_crewai_analysis_task(match_id: str, query: str) -> dict:
     """
     Run AI analysis using CrewAI.
