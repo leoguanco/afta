@@ -79,3 +79,6 @@ backend/test_output.txt
 backend/debug_imports.py
 backend/check_crewai.py
 backend/run_test_log.py
+
+# Node Frontend
+frontend/node_modules
