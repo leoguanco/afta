@@ -10,13 +10,13 @@ This plan details the implementation of the Tactical Report Generation feature a
 
 ## Implementation Status
 
-- [ ] Domain Layer (entities, value objects, ports)
-- [ ] Chart Generation (mplsoccer)
-- [ ] PDF Generation (weasyprint)
-- [ ] JSON Export
-- [ ] Application Layer (use case)
-- [ ] API Endpoints
-- [ ] Tests
+- [x] Domain Layer (entities, value objects, ports)
+- [x] Chart Generation (mplsoccer)
+- [x] PDF Generation (weasyprint)
+- [x] JSON Export
+- [x] Application Layer (use case)
+- [x] API Endpoints
+- [x] Tests
 
 ## Proposed Changes
 

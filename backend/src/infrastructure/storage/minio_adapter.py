@@ -119,3 +119,47 @@ class MinIOAdapter(ObjectStoragePort):
         except Exception as e:
             logger.error(f"Failed to retrieve Parquet from MinIO: {e}")
             raise
+
+    def put_object(self, key: str, data: bytes, content_type: str = "application/octet-stream") -> None:
+        """
+        Store raw bytes in MinIO.
+        
+        Args:
+            key: Storage path/key.
+            data: Raw bytes to store.
+            content_type: MIME type of the content.
+        """
+        try:
+            buffer = io.BytesIO(data)
+            self.client.put_object(
+                bucket_name=self.bucket,
+                object_name=key,
+                data=buffer,
+                length=len(data),
+                content_type=content_type
+            )
+            logger.info(f"Stored object in MinIO: {self.bucket}/{key}")
+        except Exception as e:
+            logger.error(f"Failed to store object in MinIO: {e}")
+            raise
+
+    def get_object(self, key: str) -> bytes:
+        """
+        Retrieve raw bytes from MinIO.
+        
+        Args:
+            key: Storage path/key.
+            
+        Returns:
+            Raw bytes of the object.
+        """
+        try:
+            response = self.client.get_object(self.bucket, key)
+            data = response.read()
+            response.close()
+            response.release_conn()
+            logger.info(f"Retrieved object from MinIO: {self.bucket}/{key}")
+            return data
+        except Exception as e:
+            logger.error(f"Failed to retrieve object from MinIO: {e}")
+            raise

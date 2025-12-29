@@ -141,9 +141,58 @@ class MetricsRepository(MetricsRepositoryPort):
         """Get all pitch control frames for a match."""
         return [f for f in self.pitch_control_frames if f.match_id == match_id]
     
-    def get_physical_stats(self, match_id: str) -> List[StoredPhysicalStats]:
-        """Get all physical stats for a match."""
-        return [s for s in self.physical_stats if s.match_id == match_id]
+    def get_physical_stats(self, match_id: str, team_id: str = None) -> List[dict]:
+        """Get all physical stats for a match as dictionaries."""
+        stats = [s for s in self.physical_stats if s.match_id == match_id]
+        # Note: team_id filtering would require team information stored with players
+        return [
+            {
+                "player_id": s.player_id,
+                "total_distance": s.total_distance,
+                "max_speed": s.max_speed,
+                "sprint_count": s.sprint_count,
+                "avg_speed": s.avg_speed
+            }
+            for s in stats
+        ]
+    
+    def get_ppda(self, match_id: str, team_id: str) -> dict:
+        """Get PPDA metrics for a team."""
+        for p in self.ppda_metrics:
+            if p.match_id == match_id and p.team_id == team_id:
+                return {
+                    "team_id": p.team_id,
+                    "passes_allowed": p.passes_allowed,
+                    "defensive_actions": p.defensive_actions,
+                    "ppda": p.ppda
+                }
+        return {}
+    
+    def get_match_summary(self, match_id: str) -> dict:
+        """
+        Get aggregated match summary metrics.
+        
+        Aggregates physical stats and PPDA into a summary.
+        """
+        physical = self.get_physical_stats(match_id)
+        
+        # Calculate totals
+        total_distance = sum(p["total_distance"] for p in physical) if physical else 0
+        max_speed = max((p["max_speed"] for p in physical), default=0)
+        total_sprints = sum(p["sprint_count"] for p in physical) if physical else 0
+        
+        # Get PPDA for both teams
+        home_ppda = self.get_ppda(match_id, "home")
+        away_ppda = self.get_ppda(match_id, "away")
+        
+        return {
+            "total_distance_km": round(total_distance, 2),
+            "max_speed_kmh": round(max_speed, 1),
+            "total_sprints": total_sprints,
+            "players_tracked": len(physical),
+            "home_ppda": home_ppda.get("ppda", 0),
+            "away_ppda": away_ppda.get("ppda", 0)
+        }
     
     def get_ppda_metrics(self, match_id: str) -> List[StoredPPDA]:
         """Get all PPDA metrics for a match."""

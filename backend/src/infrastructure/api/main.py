@@ -18,6 +18,7 @@ from src.infrastructure.worker.celery_app import celery_app
 
 # Now safe to import - chat router no longer imports heavy dependencies
 from src.infrastructure.api.endpoints.chat import router as chat_router
+from src.infrastructure.api.endpoints.reports import router as reports_router
 
 app = FastAPI(title="Football Intelligence Engine API", version="0.1.0")
 
@@ -34,6 +35,7 @@ async def correlation_id_middleware(request: Request, call_next):
 
 # Register routers
 app.include_router(chat_router)
+app.include_router(reports_router)
 
 # Observability
 metrics_app = make_asgi_app()
