@@ -82,3 +82,4 @@ backend/run_test_log.py
 
 # Node Frontend
 frontend/node_modules
+frontend/.next

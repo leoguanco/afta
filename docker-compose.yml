@@ -49,7 +49,7 @@ services:
   # 🗄️ Database (PostGIS + PgVector)
   # -------------------------------------------------------------------------
   db:
-    image: ankane/pgvector:v0.5.1
+    image: pgvector/pgvector:pg16
     container_name: afta-db
     environment:
       - POSTGRES_USER=postgres
