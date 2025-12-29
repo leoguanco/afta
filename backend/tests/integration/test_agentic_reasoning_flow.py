@@ -5,7 +5,7 @@ Tests the complete flow from API request to job completion.
 """
 import pytest
 from unittest.mock import Mock, patch
-from src.application.use_cases.analyze_match import AnalyzeMatchUseCase
+from src.application.use_cases.match_analyzer import MatchAnalyzer
 from src.domain.entities.analysis_job import AnalysisJob, JobStatus, AnalysisResult
 
 
@@ -14,6 +14,10 @@ class MockAnalysisPort:
     
     def __init__(self):
         self.dispatched_jobs = []
+
+    def run_analysis(self, match_id: str, query: str, match_context: str = "") -> str:
+        """Mock synchronous run."""
+        return "Analysis result"
     
     def dispatch_analysis(self, match_id: str, query: str) -> str:
         """Mock dispatch that returns a predictable job_id."""
@@ -30,7 +34,7 @@ def test_analyze_match_use_case():
     """Test the complete use case flow."""
     # Arrange
     mock_port = MockAnalysisPort()
-    use_case = AnalyzeMatchUseCase(mock_port)
+    use_case = MatchAnalyzer(mock_port)
     
     # Act
     result = use_case.execute(

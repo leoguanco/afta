@@ -8,7 +8,7 @@ instead of using mock.patch.
 from typing import Optional, Dict, List
 from src.domain.entities.match import Match
 from src.domain.ports.match_repository import MatchRepository
-from src.domain.ports.storage_port import StoragePort
+from src.domain.ports.object_storage_port import ObjectStoragePort
 from src.domain.ports.analysis_port import AnalysisPort
 import pandas as pd
 import io
@@ -29,23 +29,23 @@ class FakeMatchRepository(MatchRepository):
         self.matches[match.match_id] = match
 
 
-class FakeStorageAdapter(StoragePort):
+class FakeStorageAdapter(ObjectStoragePort):
     """In-memory Storage Adapter for testing."""
     
     def __init__(self):
         self.storage: Dict[str, bytes] = {}
     
-    def save_parquet(self, object_name: str, data: pd.DataFrame) -> None:
+    def save_parquet(self, key: str, data: pd.DataFrame) -> None:
         """Save DataFrame as parquet bytes in memory."""
         buffer = io.BytesIO()
         data.to_parquet(buffer, engine='pyarrow', index=False)
-        self.storage[object_name] = buffer.getvalue()
+        self.storage[key] = buffer.getvalue()
     
-    def get_parquet(self, object_name: str) -> pd.DataFrame:
+    def get_parquet(self, key: str) -> pd.DataFrame:
         """Retrieve DataFrame from memory."""
-        if object_name not in self.storage:
-            raise FileNotFoundError(f"Object {object_name} not found")
-        buffer = io.BytesIO(self.storage[object_name])
+        if key not in self.storage:
+            raise FileNotFoundError(f"Object {key} not found")
+        buffer = io.BytesIO(self.storage[key])
         return pd.read_parquet(buffer, engine='pyarrow')
 
 
@@ -64,3 +64,12 @@ class FakeAnalysisAdapter(AnalysisPort):
             'match_context': match_context
         })
         return self.canned_response
+
+    def dispatch_analysis(self, match_id: str, query: str) -> str:
+        """Mock dispatch."""
+        self.calls.append({
+            'match_id': match_id,
+            'query': query,
+            'type': 'async'
+        })
+        return "fake-job-id"
