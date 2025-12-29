@@ -28,6 +28,7 @@ from src.infrastructure.api.endpoints.ingestion import router as ingestion_route
 from src.infrastructure.api.endpoints.video import router as video_router
 from src.infrastructure.api.endpoints.metrics import router as metrics_router
 from src.infrastructure.api.endpoints.phases import router as phases_router
+from src.infrastructure.api.endpoints.patterns import router as patterns_router
 
 app = FastAPI(title="Football Intelligence Engine API", version="0.1.0")
 
@@ -51,6 +52,7 @@ app.include_router(ingestion_router)
 app.include_router(video_router)
 app.include_router(metrics_router)
 app.include_router(phases_router)
+app.include_router(patterns_router)
 
 # Observability
 metrics_app = make_asgi_app()
