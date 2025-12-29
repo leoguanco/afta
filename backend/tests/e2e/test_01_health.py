@@ -10,9 +10,9 @@ def test_health_check(api_client):
     response = api_client.get(f"{API_URL}/health")
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "healthy"
-    assert data["database"] == "connected"
-    assert data["redis"] == "connected"
+    assert data["status"] == "ok"
+    assert data["db"] == "ok"
+    assert data["redis"] == "ok"
 
 def test_metrics_endpoint(api_client):
     """Verify Prometheus metrics are exposed."""
