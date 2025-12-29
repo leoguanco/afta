@@ -136,7 +136,8 @@ Feature specifications in `features/` directory:
 - [Phase Classification](features/07_phase_classification/07_phase_classification_spec.md) 🆕
 - [Report Generation](features/08_report_generation/08_report_generation_spec.md) 🆕
 - [Pattern Detection](features/09_pattern_detection/09_pattern_detection_spec.md) 🆕
-- [UI Dashboard](features/ui_dashboard/ui_dashboard_spec.md)
+- [Design Specs](features/ui_dashboard/ui_dashboard_spec.md)
+- [Architecture & Flow Diagrams](docs/architecture_diagrams.md) 🆕
 
 ---
 
