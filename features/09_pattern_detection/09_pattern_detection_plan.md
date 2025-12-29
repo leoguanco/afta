@@ -54,6 +54,11 @@ This plan details the implementation of the Tactical Pattern Detection feature a
 - Define `PatternRepository` interface.
 - **Methods**: `save_patterns()`, `get_patterns()`, `get_pattern_occurrences()`.
 
+#### [NEW] [pattern_labeler.py](../../backend/src/domain/services/pattern_labeler.py)
+
+- Implement rule-based pattern labeling (Domain Service).
+- **Method**: `label_pattern() -> str`, `describe_pattern() -> str`.
+
 ---
 
 ### Infrastructure Layer
@@ -63,11 +68,6 @@ This plan details the implementation of the Tactical Pattern Detection feature a
 - Implement `SklearnPatternDetector` adapter.
 - **Models**: K-means, DBSCAN.
 - **Methods**: `fit()`, `_create_patterns()`.
-
-#### [NEW] [pattern_labeler.py](../../backend/src/infrastructure/ml/pattern_labeler.py)
-
-- Implement rule-based pattern labeling.
-- **Method**: `label_pattern() -> str`.
 
 #### [NEW] [postgres_pattern_repo.py](../../backend/src/infrastructure/db/repositories/postgres_pattern_repo.py)
 

@@ -52,16 +52,19 @@ afta/
 
 ## 🔌 API Endpoints
 
-| Endpoint                    | Method | Description                      |
-| --------------------------- | ------ | -------------------------------- |
-| `/health`                   | GET    | Real DB/Redis connectivity check |
-| `/docs`                     | GET    | OpenAPI documentation            |
-| `/api/v1/ingest`            | POST   | Start match data ingestion       |
-| `/api/v1/process-video`     | POST   | Start video tracking (GPU)       |
-| `/api/v1/calibrate`         | POST   | Compute pitch homography         |
-| `/api/v1/calculate-metrics` | POST   | Calculate tactical metrics       |
-| `/api/v1/chat/analyze`      | POST   | Start AI analysis (CrewAI)       |
-| `/api/v1/chat/jobs/{id}`    | GET    | Poll job status                  |
+| Endpoint                        | Method | Description                      |
+| ------------------------------- | ------ | -------------------------------- |
+| `/health`                       | GET    | Real DB/Redis connectivity check |
+| `/docs`                         | GET    | OpenAPI documentation            |
+| `/api/v1/ingest`                | POST   | Start match data ingestion       |
+| `/api/v1/process-video`         | POST   | Start video tracking (GPU)       |
+| `/api/v1/calibrate`             | POST   | Compute pitch homography         |
+| `/api/v1/calculate-metrics`     | POST   | Calculate tactical metrics       |
+| `/api/v1/chat/analyze`          | POST   | Start AI analysis (CrewAI)       |
+| `/api/v1/chat/jobs/{id}`        | GET    | Poll job status                  |
+| `/api/v1/reports/generate`      | POST   | Generate tactical report         |
+| `/api/v1/patterns/detect`       | POST   | Detect tactical patterns         |
+| `/api/v1/matches/{id}/patterns` | GET    | Get discovered patterns          |
 
 ## 🚀 Quick Start (Local Development)
 

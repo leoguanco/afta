@@ -23,17 +23,20 @@
 
 ## 🔌 API Endpoints
 
-| Endpoint                    | Method | Purpose                              | Worker     |
-| --------------------------- | ------ | ------------------------------------ | ---------- |
-| `/health`                   | GET    | Real connectivity checks (DB, Redis) | -          |
-| `/docs`                     | GET    | OpenAPI documentation                | -          |
-| `/metrics`                  | GET    | Prometheus metrics                   | -          |
-| `/api/v1/ingest`            | POST   | Start match data ingestion           | worker-cpu |
-| `/api/v1/process-video`     | POST   | Start video tracking (YOLO)          | worker-gpu |
-| `/api/v1/calibrate`         | POST   | Compute pitch homography             | worker-cpu |
-| `/api/v1/calculate-metrics` | POST   | Calculate tactical metrics           | worker-cpu |
-| `/api/v1/chat/analyze`      | POST   | Start AI analysis (CrewAI)           | worker-cpu |
-| `/api/v1/chat/jobs/{id}`    | GET    | Poll job status                      | -          |
+| Endpoint                        | Method | Purpose                              | Worker     |
+| ------------------------------- | ------ | ------------------------------------ | ---------- |
+| `/health`                       | GET    | Real connectivity checks (DB, Redis) | -          |
+| `/docs`                         | GET    | OpenAPI documentation                | -          |
+| `/metrics`                      | GET    | Prometheus metrics                   | -          |
+| `/api/v1/ingest`                | POST   | Start match data ingestion           | worker-cpu |
+| `/api/v1/process-video`         | POST   | Start video tracking (YOLO)          | worker-gpu |
+| `/api/v1/calibrate`             | POST   | Compute pitch homography             | worker-cpu |
+| `/api/v1/calculate-metrics`     | POST   | Calculate tactical metrics           | worker-cpu |
+| `/api/v1/chat/analyze`          | POST   | Start AI analysis (CrewAI)           | worker-cpu |
+| `/api/v1/chat/jobs/{id}`        | GET    | Poll job status                      | -          |
+| `/api/v1/reports/generate`      | POST   | Generate tactical report (PDF/JSON)  | worker-cpu |
+| `/api/v1/patterns/detect`       | POST   | Detect tactical patterns             | worker-cpu |
+| `/api/v1/matches/{id}/patterns` | GET    | Get discovered patterns              | -          |
 
 ---
 
@@ -65,8 +68,8 @@
 | Agentic Reasoning    | 🟢 Implemented | `/api/v1/chat/analyze`        | CrewAI multi-agent system      |
 | Health Monitoring    | 🟢 Implemented | `/health`                     | Real DB/Redis connectivity     |
 | Phase Classification | 🟢 Implemented | `/api/v1/matches/{id}/phases` | ML 4-phase classification      |
-| Report Generation    | 🟡 Planned     | `/api/v1/reports/generate`    | PDF/JSON export with charts    |
-| Pattern Detection    | 🟡 Planned     | `/api/v1/patterns/detect`     | Unsupervised ML clustering     |
+| Report Generation    | 🟢 Implemented | `/api/v1/reports/generate`    | PDF/JSON with mplsoccer charts |
+| Pattern Detection    | 🟢 Implemented | `/api/v1/patterns/detect`     | K-means/DBSCAN clustering      |
 
 ### Architecture Improvements (Recent)
 
