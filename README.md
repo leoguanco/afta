@@ -110,7 +110,14 @@ We enforce **Test Driven Development** with **Hexagonal Architecture** testing p
 
   ```bash
   cd backend
-  pytest tests/ -v
+  pytest tests/unit -v
+  ```
+
+- **Production Verification (E2E):** (Requires Docker running)
+
+  ```bash
+  # Run full system verification (Ingestion -> DB -> Reports)
+  docker exec -e E2E_API_URL=http://localhost:8000 afta-api pytest tests/e2e -v
   ```
 
 - **Test Architecture:**
