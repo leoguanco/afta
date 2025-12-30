@@ -132,3 +132,12 @@ MATCH CONTEXT AND STATISTICS:
         
         result = crew.kickoff()
         return str(result)
+
+    def dispatch_analysis(self, match_id: str, query: str) -> str:
+        """
+        Dispatch analysis job (Not supported by synchronous adapter).
+        
+        This adapter is designed to run within the worker context, 
+        so dispatching is handled by CeleryAnalysisDispatcher.
+        """
+        raise NotImplementedError("CrewAIAdapter is for synchronous execution only. Use CeleryAnalysisDispatcher for dispatching.")

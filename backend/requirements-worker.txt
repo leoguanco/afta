@@ -25,3 +25,8 @@ chromadb
 # Computer Vision (for GPU worker)
 opencv-python-headless>=4.9.0
 ultralytics>=8.1.0
+
+# Reporting
+weasyprint>=61.0
+matplotlib>=3.8.0
+mplsoccer>=1.2.0

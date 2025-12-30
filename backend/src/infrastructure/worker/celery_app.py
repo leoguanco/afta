@@ -25,9 +25,11 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    task_default_queue="default",
     task_routes={
-        "ingestion_tasks.*": {"queue": "default"},
-        "vision_tasks.*": {"queue": "gpu_queue"},
+        "src.infrastructure.worker.tasks.ingestion_tasks.*": {"queue": "default"},
+        "src.infrastructure.worker.tasks.vision_tasks.*": {"queue": "gpu_queue"},
+        "src.infrastructure.worker.tasks.crewai_tasks.*": {"queue": "default"},
         "run_crewai_analysis": {"queue": "default"},
     },
 )

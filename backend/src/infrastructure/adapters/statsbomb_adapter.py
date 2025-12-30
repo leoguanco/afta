@@ -5,7 +5,7 @@ Infrastructure adapter that implements MatchRepository using statsbombpy.
 """
 
 from typing import Optional
-import statsbombpy as sb
+from statsbombpy import sb
 
 from src.domain.entities.event import Event, EventType
 from src.domain.entities.match import Match
@@ -67,7 +67,9 @@ class StatsBombAdapter(MatchRepository):
 
             return match
 
-        except Exception:
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"StatsBomb fetch failed: {e}", exc_info=True)
             return None
 
     def save(self, match: Match) -> None:
