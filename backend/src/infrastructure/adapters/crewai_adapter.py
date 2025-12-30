@@ -20,11 +20,26 @@ class CrewAIAdapter(AnalysisPort):
     
     def __init__(self):
         """Initialize CrewAI adapter with LLM configuration."""
-        self.llm = ChatOpenAI(
-            model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-            temperature=0.7,
-            api_key=os.getenv("OPENAI_API_KEY")
-        )
+        # LLM Provider Selection
+        provider = os.getenv("LLM_PROVIDER", "openai").lower()
+        
+        if provider == "gemini":
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            api_key = os.getenv("GOOGLE_API_KEY")
+            if not api_key:
+                raise ValueError("GOOGLE_API_KEY is required for Gemini provider")
+                
+            self.llm = ChatGoogleGenerativeAI(
+                model=os.getenv("GEMINI_MODEL", "gemini-pro"),
+                temperature=0.7,
+                google_api_key=api_key
+            )
+        else:
+            self.llm = ChatOpenAI(
+                model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+                temperature=0.7,
+                api_key=os.getenv("OPENAI_API_KEY")
+            )
     
     def create_agents(self) -> Dict[str, Agent]:
         """

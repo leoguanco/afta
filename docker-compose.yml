@@ -111,6 +111,9 @@ services:
       - MINIO_ENDPOINT=minio:9000
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-pro}
     depends_on:
       - db
       - redis
@@ -173,6 +176,28 @@ services:
     networks:
       - afta-net
 
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: afta-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./docker/loki-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - afta-net
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: afta-promtail
+    volumes:
+      - ./docker/promtail-config.yaml:/etc/promtail/config.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - afta-net
+
   grafana:
     image: grafana/grafana
     container_name: afta-grafana
@@ -187,6 +212,7 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     depends_on:
       - prometheus
+      - loki
     networks:
       - afta-net
 

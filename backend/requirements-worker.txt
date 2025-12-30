@@ -20,6 +20,7 @@ statsbombpy>=1.12.0
 crewai
 langchain
 langchain_openai
+langchain-google-genai
 chromadb
 
 # Computer Vision (for GPU worker)
