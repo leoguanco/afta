@@ -3,10 +3,14 @@ Pattern Detection API Endpoints - Infrastructure Layer
 
 Endpoints for tactical pattern detection and querying.
 """
-from fastapi import APIRouter
-from pydantic import BaseModel
 from typing import Optional, List
 
+from fastapi import APIRouter
+from pydantic import BaseModel
+
+from src.application.use_cases.pattern_detector import PatternDetector
+from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
+from src.infrastructure.ml.sklearn_pattern_detector import SklearnPatternDetector
 from src.infrastructure.worker.celery_app import celery_app
 
 router = APIRouter(prefix="/api/v1", tags=["patterns"])
@@ -88,10 +92,6 @@ async def get_match_patterns(match_id: str, team_id: str = "home"):
     # For now, run synchronously for GET requests
     # In production, this would query the pattern repository
     try:
-        from src.application.use_cases.pattern_detector import PatternDetector
-        from src.infrastructure.ml.sklearn_pattern_detector import SklearnPatternDetector
-        from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
-        
         detector = SklearnPatternDetector()
         match_repo = PostgresMatchRepo()
         

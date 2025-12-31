@@ -3,7 +3,8 @@ Metrics Repository Implementation - Infrastructure Layer
 
 Concrete implementation of MetricsRepository port (in-memory for development).
 """
-from dataclasses import dataclass, field
+import json
+from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional
 import numpy as np
 from datetime import datetime
@@ -70,9 +71,6 @@ class MetricsRepository(MetricsRepositoryPort):
 
     def flush(self, match_id: str) -> None:
         """Persist current state to MinIO for the given match."""
-        import json
-        from dataclasses import asdict
-        
         data = {
             "physical_stats": [asdict(s) for s in self.physical_stats if s.match_id == match_id],
             "ppda_metrics": [asdict(s) for s in self.ppda_metrics if s.match_id == match_id],
@@ -96,8 +94,6 @@ class MetricsRepository(MetricsRepositoryPort):
         
     def load(self, match_id: str) -> None:
         """Load state from MinIO for the match."""
-        import json
-        
         key = f"metrics/{match_id}.json"
         try:
             data_bytes = self.minio.get_object(key)

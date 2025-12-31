@@ -3,10 +3,12 @@ Report API Endpoints - Infrastructure Layer
 
 API endpoints for tactical report generation and download.
 """
-from fastapi import APIRouter, HTTPException, Response
-from pydantic import BaseModel
 from typing import Optional
 
+from fastapi import APIRouter, HTTPException, Response
+from pydantic import BaseModel
+
+from src.infrastructure.storage.minio_adapter import MinIOAdapter
 from src.infrastructure.worker.celery_app import celery_app
 
 router = APIRouter(prefix="/api/v1/reports", tags=["reports"])
@@ -97,9 +99,6 @@ async def download_report(report_id: str):
     Retrieves from MinIO storage.
     """
     try:
-        # Lazy import to avoid loading heavy dependencies
-        from src.infrastructure.storage.minio_adapter import MinIOAdapter
-        
         storage = MinIOAdapter()
         
         # Try PDF first, then JSON

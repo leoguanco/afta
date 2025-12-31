@@ -3,18 +3,19 @@ Vision Tasks (Celery Workers).
 
 Background tasks for video processing, routed to the GPU worker queue.
 """
-
 import logging
 from typing import List
+
 import cv2
 import pandas as pd
 from minio.error import S3Error
 
-from src.infrastructure.worker.celery_app import celery_app
-from src.infrastructure.vision.yolo_detector import YOLODetector
-from src.infrastructure.vision.byte_tracker import ByteTrackerAdapter
-from src.infrastructure.storage.minio_adapter import MinIOAdapter
+from src.domain.events.tracking_completed import TrackingCompletedEvent
 from src.domain.value_objects.trajectory import Trajectory
+from src.infrastructure.storage.minio_adapter import MinIOAdapter
+from src.infrastructure.vision.byte_tracker import ByteTrackerAdapter
+from src.infrastructure.vision.yolo_detector import YOLODetector
+from src.infrastructure.worker.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +99,6 @@ def process_video_task(self, video_path: str, output_path: str) -> dict:
         logger.info(f"Video processing complete: {frame_id} frames, {len(all_trajectories)} trajectories")
 
         # Emit domain event for tracking completion
-        from src.domain.events.tracking_completed import TrackingCompletedEvent
-        
         tracking_event = TrackingCompletedEvent(
             aggregate_id=match_id,
             match_id=match_id,
@@ -112,7 +111,6 @@ def process_video_task(self, video_path: str, output_path: str) -> dict:
         logger.info(f"Emitted TrackingCompletedEvent: {tracking_event.event_id}")
         
         # Chain to metrics calculation task automatically
-        from src.infrastructure.worker.celery_app import celery_app
         celery_app.send_task(
             'calculate_match_metrics',
             args=[match_id, trajectory_data, []],  # tracking_data, event_data (empty for now)

@@ -9,8 +9,11 @@ Minimal main.py that only handles:
 """
 import os
 import uuid
+
 from fastapi import FastAPI, Request
 from prometheus_client import make_asgi_app
+from redis import Redis
+from sqlalchemy import text
 
 # Configure JSON logging
 from src.infrastructure.logging import configure_logging, set_correlation_id, get_logger
@@ -20,6 +23,9 @@ use_json = os.getenv("DEBUG", "false").lower() != "true"
 configure_logging(json_format=use_json)
 
 logger = get_logger(__name__)
+
+# Import database engine
+from src.infrastructure.db.database import engine
 
 # Import routers
 from src.infrastructure.api.endpoints.chat import router as chat_router
@@ -77,8 +83,6 @@ async def health():
     
     # Check database connectivity
     try:
-        from src.infrastructure.db.database import engine
-        from sqlalchemy import text
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         health_status["db"] = "ok"
@@ -88,7 +92,6 @@ async def health():
     
     # Check Redis connectivity
     try:
-        from redis import Redis
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         redis_client = Redis.from_url(redis_url, socket_connect_timeout=2)
         redis_client.ping()

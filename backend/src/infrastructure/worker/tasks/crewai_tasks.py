@@ -3,12 +3,14 @@ CrewAI Tasks - Infrastructure Layer
 
 Celery tasks for running AI analysis using CrewAI.
 """
-from celery import shared_task
+from collections import Counter
 import time
+
+from celery import shared_task
+from prometheus_client import Histogram, Counter as PromCounter
 
 from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
 from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
-from prometheus_client import Histogram, Counter
 
 # Metrics
 llm_request_duration = Histogram(
@@ -17,7 +19,7 @@ llm_request_duration = Histogram(
     ['status']
 )
 
-llm_tokens_total = Counter(
+llm_tokens_total = PromCounter(
     'llm_tokens_total',
     'Total tokens used by LLM',
     ['model']
@@ -99,7 +101,6 @@ def _build_match_context(match_id: str) -> str:
         ]
         
         # Count events by type
-        from collections import Counter
         event_counts = Counter(event.event_type.value for event in match.events)
         
         context_lines.append("\nEvent Breakdown:")

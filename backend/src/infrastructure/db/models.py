@@ -118,3 +118,50 @@ class PhaseTransitionModel(Base):
     from_phase = Column(String, nullable=False)
     to_phase = Column(String, nullable=False)
 
+
+class PhysicalStatsModel(Base):
+    """
+    SQLAlchemy model for player physical statistics.
+    
+    Stores per-player metrics like distance, speed, sprints.
+    """
+    __tablename__ = "physical_stats"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    match_id = Column(String, ForeignKey("matches.match_id"), nullable=False, index=True)
+    player_id = Column(String, nullable=False, index=True)
+    team_id = Column(String, nullable=True)  # 'home' or 'away'
+    total_distance = Column(Float, default=0.0)  # km
+    max_speed = Column(Float, default=0.0)  # km/h
+    avg_speed = Column(Float, default=0.0)  # km/h
+    sprint_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Composite unique constraint (one record per player per match)
+    __table_args__ = (
+        Index('ix_physical_stats_match_player', 'match_id', 'player_id', unique=True),
+    )
+
+
+class PPDAStatsModel(Base):
+    """
+    SQLAlchemy model for PPDA (Passes Per Defensive Action) metrics.
+    
+    Stores per-team tactical pressing intensity.
+    """
+    __tablename__ = "ppda_stats"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    match_id = Column(String, ForeignKey("matches.match_id"), nullable=False, index=True)
+    team_id = Column(String, nullable=False)  # 'home' or 'away'
+    passes_allowed = Column(Integer, default=0)
+    defensive_actions = Column(Integer, default=0)
+    ppda = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Composite unique constraint (one record per team per match)
+    __table_args__ = (
+        Index('ix_ppda_stats_match_team', 'match_id', 'team_id', unique=True),
+    )
+
+

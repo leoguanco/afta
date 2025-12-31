@@ -3,10 +3,17 @@ Report Tasks - Infrastructure Layer
 
 Celery tasks for asynchronous report generation.
 """
-from celery import shared_task
 from typing import Optional, Dict, Any
 
+from celery import shared_task
+
+from src.application.use_cases.report_generator import ReportGenerator
+from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
+from src.infrastructure.db.repositories.postgres_metrics_repo import PostgresMetricsRepository
 from src.infrastructure.logging import get_logger
+from src.infrastructure.reports.chart_generator import ChartGenerator
+from src.infrastructure.reports.pdf_generator import WeasyPrintReportGenerator, SimplePDFGenerator
+from src.infrastructure.storage.minio_adapter import MinIOAdapter
 
 logger = get_logger(__name__)
 
@@ -37,14 +44,6 @@ def generate_tactical_report_task(
     logger.info(f"Starting report generation for match {match_id}")
     
     try:
-        # Import Use Case and dependencies
-        from src.application.use_cases.report_generator import ReportGenerator
-        from src.infrastructure.reports.pdf_generator import WeasyPrintReportGenerator, SimplePDFGenerator
-        from src.infrastructure.storage.minio_adapter import MinIOAdapter
-        from src.infrastructure.storage.metrics_repo import MetricsRepository
-        from src.infrastructure.reports.chart_generator import ChartGenerator
-        from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
-        
         # Try WeasyPrint, fall back to Simple if unavailable
         try:
             report_generator = WeasyPrintReportGenerator()
@@ -53,8 +52,7 @@ def generate_tactical_report_task(
             report_generator = SimplePDFGenerator()
         
         # Instantiate Adapters
-        metrics_repo = MetricsRepository()
-        metrics_repo.load(match_id)  # Load metrics explicitly
+        metrics_repo = PostgresMetricsRepository()
         
         chart_gen = ChartGenerator()
         object_storage = MinIOAdapter()
@@ -106,3 +104,4 @@ def generate_tactical_report_task(
     except Exception as e:
         logger.error(f"Report generation failed: {e}")
         raise
+

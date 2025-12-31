@@ -10,7 +10,7 @@ from celery import shared_task
 from src.application.use_cases.metrics_calculator import MetricsCalculator
 
 # Infrastructure
-from src.infrastructure.storage.metrics_repo import MetricsRepository
+from src.infrastructure.db.repositories.postgres_metrics_repo import PostgresMetricsRepository
 
 
 @shared_task(name="calculate_match_metrics")
@@ -33,20 +33,21 @@ def calculate_match_metrics_task(
         Status dictionary with calculation results
     """
     # Initialize infrastructure dependencies
-    repository = MetricsRepository()
+    repository = PostgresMetricsRepository()
     
-    # Execute use case
-    use_case = MetricsCalculator(repository)
-    result = use_case.execute(match_id, tracking_data, event_data)
-    
-    # Persist results
-    repository.flush(match_id)
-    
-    return {
-        "status": result.status,
-        "match_id": result.match_id,
-        "players_processed": result.players_processed,
-        "frames_processed": result.frames_processed,
-        "events_processed": result.events_processed
-    }
+    try:
+        # Execute use case
+        use_case = MetricsCalculator(repository)
+        result = use_case.execute(match_id, tracking_data, event_data)
+        
+        return {
+            "status": result.status,
+            "match_id": result.match_id,
+            "players_processed": result.players_processed,
+            "frames_processed": result.frames_processed,
+            "events_processed": result.events_processed
+        }
+    finally:
+        repository.close()
+
 

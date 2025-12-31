@@ -3,10 +3,14 @@ Pattern Detection Tasks - Infrastructure Layer
 
 Celery tasks for asynchronous pattern detection.
 """
-from celery import shared_task
 from typing import Optional, Dict, Any, List
 
+from celery import shared_task
+
+from src.application.use_cases.pattern_detector import PatternDetector
+from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
 from src.infrastructure.logging import get_logger
+from src.infrastructure.ml.sklearn_pattern_detector import SklearnPatternDetector
 
 logger = get_logger(__name__)
 
@@ -31,11 +35,6 @@ def detect_patterns_task(
     logger.info(f"Starting pattern detection for match {match_id}")
     
     try:
-        # Import Use Case and dependencies
-        from src.application.use_cases.pattern_detector import PatternDetector
-        from src.infrastructure.ml.sklearn_pattern_detector import SklearnPatternDetector
-        from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
-        
         # Create dependencies
         detector = SklearnPatternDetector(algorithm="kmeans")
         match_repo = PostgresMatchRepo()
@@ -67,3 +66,4 @@ def detect_patterns_task(
     except Exception as e:
         logger.error(f"Pattern detection failed: {e}")
         raise
+

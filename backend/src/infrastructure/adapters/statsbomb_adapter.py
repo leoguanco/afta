@@ -3,14 +3,19 @@ StatsBomb Adapter.
 
 Infrastructure adapter that implements MatchRepository using statsbombpy.
 """
-
+import logging
 from typing import Optional
+
+import pandas as pd
 from statsbombpy import sb
 
 from src.domain.entities.event import Event, EventType
 from src.domain.entities.match import Match
 from src.domain.ports.match_repository import MatchRepository
 from src.domain.value_objects.coordinates import Coordinates
+from src.infrastructure.storage.minio_adapter import MinIOAdapter
+
+logger = logging.getLogger(__name__)
 
 
 # Mapping from StatsBomb event types to our domain EventType
@@ -55,9 +60,6 @@ class StatsBombAdapter(MatchRepository):
             # Attempt to fetch 360 Frames (Tracking Data)
             # This is "real data" for analytics
             try:
-                import pandas as pd
-                from src.infrastructure.storage.minio_adapter import MinIOAdapter
-                
                 # Fetch 360 frames
                 frames_360 = sb.frames(match_id=int(match_id), fmt='dataframe')
                 
@@ -74,8 +76,7 @@ class StatsBombAdapter(MatchRepository):
                     minio.save_parquet(key, frames_360)
             except Exception as e:
                 # Log but don't fail the match ingestion if tracking is missing/fails
-                import logging
-                logging.getLogger(__name__).warning(f"Could not fetch/save 360 data: {e}")
+                logger.warning(f"Could not fetch/save 360 data: {e}")
 
             # Create Match aggregate
             match = Match(
@@ -93,8 +94,7 @@ class StatsBombAdapter(MatchRepository):
             return match
 
         except Exception as e:
-            import logging
-            logging.getLogger(__name__).error(f"StatsBomb fetch failed: {e}", exc_info=True)
+            logger.error(f"StatsBomb fetch failed: {e}", exc_info=True)
             return None
 
     def save(self, match: Match) -> None:
