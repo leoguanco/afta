@@ -41,6 +41,9 @@ def generate_tactical_report_task(
         from src.application.use_cases.report_generator import ReportGenerator
         from src.infrastructure.reports.pdf_generator import WeasyPrintReportGenerator, SimplePDFGenerator
         from src.infrastructure.storage.minio_adapter import MinIOAdapter
+        from src.infrastructure.storage.metrics_repo import MetricsRepository
+        from src.infrastructure.reports.chart_generator import ChartGenerator
+        from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
         
         # Try WeasyPrint, fall back to Simple if unavailable
         try:
@@ -49,10 +52,27 @@ def generate_tactical_report_task(
             logger.warning("WeasyPrint not available, using SimplePDFGenerator")
             report_generator = SimplePDFGenerator()
         
+        # Instantiate Adapters
+        metrics_repo = MetricsRepository()
+        metrics_repo.load(match_id)  # Load metrics explicitly
+        
+        chart_gen = ChartGenerator()
+        object_storage = MinIOAdapter()
+        
+        try:
+            ai_analyst = CrewAIAdapter()
+        except ValueError:
+            # If no API Key, just disable AI part gracefully
+            logger.warning("CrewAI initialization failed (no key?), disabling AI analysis.")
+            ai_analyst = None
+
         # Create Use Case
         use_case = ReportGenerator(
             report_generator=report_generator,
-            # Other dependencies can be injected here
+            metrics_repository=metrics_repo,
+            analysis_port=ai_analyst if include_ai_analysis else None,
+            chart_generator=chart_gen if include_charts else None,
+            object_storage=object_storage
         )
         
         # Execute
@@ -60,7 +80,7 @@ def generate_tactical_report_task(
             match_id=match_id,
             team_id=team_id,
             output_format=output_format,
-            include_ai_analysis=include_ai_analysis,
+            include_ai_analysis=include_ai_analysis and (ai_analyst is not None),
             include_charts=include_charts,
             title=title
         )

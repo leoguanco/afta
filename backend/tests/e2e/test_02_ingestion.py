@@ -3,7 +3,7 @@ import pytest
 import time
 
 API_URL = "http://localhost:8000/api/v1"
-TEST_MATCH_ID = "3749133"  # Common StatsBomb sample match
+TEST_MATCH_ID = "3788762"  # Euro 2020 Final (Italy vs England) - Has 360 Frames
 
 def test_ingest_match(api_client):
     """Test full ingestion workflow for a StatsBomb match."""

@@ -52,6 +52,31 @@ class StatsBombAdapter(MatchRepository):
             if events_df.empty:
                 return None
 
+            # Attempt to fetch 360 Frames (Tracking Data)
+            # This is "real data" for analytics
+            try:
+                import pandas as pd
+                from src.infrastructure.storage.minio_adapter import MinIOAdapter
+                
+                # Fetch 360 frames
+                frames_360 = sb.frames(match_id=int(match_id), fmt='dataframe')
+                
+                if not frames_360.empty:
+                    # Initialize MinIO adapter
+                    minio = MinIOAdapter(bucket="tracking-data")
+                    
+                    # Convert to parquet buffer
+                    # We save it exactly as raw data for now, PhaseClassifier handles raw DF
+                    # Real systems might normalize this schema first, but for E2E this proves the data flow
+                    key = f"tracking/{match_id}.parquet"
+                    
+                    # Using pyarrow for parquet
+                    minio.save_parquet(key, frames_360)
+            except Exception as e:
+                # Log but don't fail the match ingestion if tracking is missing/fails
+                import logging
+                logging.getLogger(__name__).warning(f"Could not fetch/save 360 data: {e}")
+
             # Create Match aggregate
             match = Match(
                 match_id=match_id,

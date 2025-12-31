@@ -3,7 +3,7 @@ import pytest
 import time
 
 API_URL = "http://localhost:8000/api/v1"
-TEST_MATCH_ID = "3749133"
+TEST_MATCH_ID = "3788762"
 
 def test_classify_phases(api_client):
     """Test phase classification trigger."""

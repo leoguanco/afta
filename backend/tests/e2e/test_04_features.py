@@ -2,7 +2,7 @@
 import pytest
 
 API_URL = "http://localhost:8000/api/v1"
-TEST_MATCH_ID = "3749133"
+TEST_MATCH_ID = "3788762"
 
 def test_pattern_detection(api_client):
     """Test pattern detection trigger."""

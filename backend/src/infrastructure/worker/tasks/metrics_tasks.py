@@ -39,6 +39,9 @@ def calculate_match_metrics_task(
     use_case = MetricsCalculator(repository)
     result = use_case.execute(match_id, tracking_data, event_data)
     
+    # Persist results
+    repository.flush(match_id)
+    
     return {
         "status": result.status,
         "match_id": result.match_id,

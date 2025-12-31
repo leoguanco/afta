@@ -50,11 +50,74 @@ class MetricsRepository(MetricsRepositoryPort):
     Currently in-memory implementation for development.
     """
     
-    def __init__(self):
-        """Initialize in-memory storage."""
+    
+    def __init__(self, bucket: str = "metrics-data"):
+        """Initialize with MinIO persistence."""
         self.pitch_control_frames: List[StoredPitchControlFrame] = []
         self.physical_stats: List[StoredPhysicalStats] = []
         self.ppda_metrics: List[StoredPPDA] = []
+        self.bucket = bucket
+        
+        # Lazy load MinIO adapter only when needed to avoid init loop
+        self._minio = None
+        
+    @property
+    def minio(self):
+        if not self._minio:
+            from src.infrastructure.storage.minio_adapter import MinIOAdapter
+            self._minio = MinIOAdapter(bucket=self.bucket)
+        return self._minio
+
+    def flush(self, match_id: str) -> None:
+        """Persist current state to MinIO for the given match."""
+        import json
+        from dataclasses import asdict
+        
+        data = {
+            "physical_stats": [asdict(s) for s in self.physical_stats if s.match_id == match_id],
+            "ppda_metrics": [asdict(s) for s in self.ppda_metrics if s.match_id == match_id],
+            # Note: Pitch control is too large for single JSON, usually handled separately or omitted from summary persistence
+        }
+        
+        # Convert datetime to string
+        def default(o):
+            if isinstance(o, (datetime, np.datetime64)):
+                return o.isoformat()
+            if isinstance(o, np.ndarray):
+                return o.tolist()
+            if isinstance(o, np.generic):
+                return o.item()
+            raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
+
+        json_bytes = json.dumps(data, default=default).encode('utf-8')
+        
+        key = f"metrics/{match_id}.json"
+        self.minio.put_object(key, json_bytes, content_type="application/json")
+        
+    def load(self, match_id: str) -> None:
+        """Load state from MinIO for the match."""
+        import json
+        
+        key = f"metrics/{match_id}.json"
+        try:
+            data_bytes = self.minio.get_object(key)
+            data = json.loads(data_bytes.decode('utf-8'))
+            
+            # Rehydrate StoredPhysicalStats
+            self.physical_stats = [
+                StoredPhysicalStats(**{**item, 'timestamp': datetime.fromisoformat(item['timestamp'])}) 
+                for item in data.get("physical_stats", [])
+            ]
+            
+            # Rehydrate StoredPPDA
+            self.ppda_metrics = [
+                StoredPPDA(**{**item, 'timestamp': datetime.fromisoformat(item['timestamp'])}) 
+                for item in data.get("ppda_metrics", [])
+            ]
+            
+        except Exception as e:
+            # If not found, assume empty
+            pass
     
     def save_pitch_control_frame(
         self,
@@ -174,6 +237,10 @@ class MetricsRepository(MetricsRepositoryPort):
         
         Aggregates physical stats and PPDA into a summary.
         """
+        # Ensure data is loaded
+        if not self.physical_stats or not any(s.match_id == match_id for s in self.physical_stats):
+            self.load(match_id)
+            
         physical = self.get_physical_stats(match_id)
         
         # Calculate totals
