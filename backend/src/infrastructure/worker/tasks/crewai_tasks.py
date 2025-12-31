@@ -11,6 +11,7 @@ from prometheus_client import Histogram, Counter as PromCounter
 
 from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
 from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
+from src.infrastructure.db.repositories.postgres_metrics_repo import PostgresMetricsRepository
 
 # Metrics
 llm_request_duration = Histogram(
@@ -120,6 +121,28 @@ def _build_match_context(match_id: str) -> str:
             for team_id, events in team_events.items():
                 context_lines.append(f"  {team_id}: {len(events)} events")
         
+        # --- ENRICHMENT START ---
+        # Fetch Metrics using PostgresMetricsRepository
+        metrics_repo = PostgresMetricsRepository()
+        metrics_summary = metrics_repo.get_match_summary(match_id)
+        
+        if metrics_summary:
+            # Physical Stats
+            if metrics_summary.physical_stats:
+                context_lines.append("\nPhysical Statistics (Top Players):")
+                # Sort by distance
+                sorted_stats = sorted(metrics_summary.physical_stats, key=lambda x: x.total_distance, reverse=True)[:5]
+                for p in sorted_stats:
+                    context_lines.append(f"  - Player {p.player_id}: {p.total_distance:.1f}m run, {p.sprint_count} sprints, Max Speed: {p.max_speed:.1f} m/s")
+
+            # PPDA
+            if metrics_summary.ppda_metrics:
+                context_lines.append("\nPressure Metrics (PPDA):")
+                for team_ppda in metrics_summary.ppda_metrics:
+                    context_lines.append(f"  - Team {team_ppda.team_id}: PPDA {team_ppda.ppda:.2f}")
+
+        # --- ENRICHMENT END ---
+
         return "\n".join(context_lines)
         
     except Exception as e:
