@@ -19,7 +19,7 @@ class MatchRepository(ABC):
     """
 
     @abstractmethod
-    def get_match(self, match_id: str, source: str) -> Optional[Match]:
+    def get_match(self, match_id: str, source: Optional[str] = None) -> Optional[Match]:
         """
         Fetch a match from a data source.
 

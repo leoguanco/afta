@@ -66,6 +66,23 @@ def classify_match_phases_task(
             "dominant_phase": sequence.get_dominant_phase().value
         }
         
+    except ValueError as e:
+        if "Tracking data not found" in str(e):
+            logger.warning(f"Phase classification skipped for {match_id}: Tracking data not yet available.")
+            return {
+                "status": "skipped",
+                "match_id": match_id,
+                "reason": "tracking_data_missing",
+                "message": str(e)
+            }
+        # Handle other ValueErrors as generic errors
+        logger.error(f"Task failed: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "match_id": match_id,
+            "message": str(e)
+        }
+
     except Exception as e:
         logger.error(f"Task failed: {e}", exc_info=True)
         return {

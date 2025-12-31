@@ -27,7 +27,7 @@ class CrewAIAdapter(AnalysisPort):
             from langchain_google_genai import ChatGoogleGenerativeAI
             api_key = os.getenv("GOOGLE_API_KEY")
             if not api_key:
-                raise ValueError("GOOGLE_API_KEY is required for Gemini provider")
+                raise ValueError("GOOGLE_API_KEY is required for Gemini provider in .env")
                 
             self.llm = ChatGoogleGenerativeAI(
                 model=os.getenv("GEMINI_MODEL", "gemini-pro"),
@@ -35,10 +35,14 @@ class CrewAIAdapter(AnalysisPort):
                 google_api_key=api_key
             )
         else:
+            api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY is required for OpenAI provider in .env")
+
             self.llm = ChatOpenAI(
                 model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
                 temperature=0.7,
-                api_key=os.getenv("OPENAI_API_KEY")
+                api_key=api_key
             )
     
     def create_agents(self) -> Dict[str, Agent]:

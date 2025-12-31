@@ -29,7 +29,7 @@ class PostgresMatchRepo(MatchRepository):
         """
         self.session = session
 
-    def get_match(self, match_id: str, source: str) -> Optional[Match]:
+    def get_match(self, match_id: str, source: Optional[str] = None) -> Optional[Match]:
         """
         Fetch a match from PostgreSQL.
         
