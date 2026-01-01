@@ -92,34 +92,36 @@ def _build_match_context(match_id: str) -> str:
         repo = PostgresMatchRepo()
         match = repo.get_match(match_id, source="statsbomb")
         
-        if not match:
-            return "Match not found in database."
-        
         # Build context string
-        context_lines = [
-            f"Match: {match.home_team_id} vs {match.away_team_id}",
-            f"Total Events: {len(match.events)}",
-        ]
+        context_lines = []
         
-        # Count events by type
-        event_counts = Counter(event.event_type.value for event in match.events)
-        
-        context_lines.append("\nEvent Breakdown:")
-        for event_type, count in event_counts.most_common():
-            context_lines.append(f"  - {event_type}: {count}")
-        
-        # Get events by team (if available)
-        team_events = {}
-        for event in match.events:
-            if event.team_id:
-                if event.team_id not in team_events:
-                    team_events[event.team_id] = []
-                team_events[event.team_id].append(event)
-        
-        if team_events:
-            context_lines.append("\nTeam Statistics:")
-            for team_id, events in team_events.items():
-                context_lines.append(f"  {team_id}: {len(events)} events")
+        if match:
+            context_lines.append(f"Match: {match.home_team_id} vs {match.away_team_id}")
+            context_lines.append(f"Total Events: {len(match.events)}")
+            
+            # Count events by type
+            event_counts = Counter(event.event_type.value for event in match.events)
+            
+            context_lines.append("\nEvent Breakdown:")
+            for event_type, count in event_counts.most_common():
+                context_lines.append(f"  - {event_type}: {count}")
+            
+            # Get events by team (if available)
+            team_events = {}
+            for event in match.events:
+                if event.team_id:
+                    if event.team_id not in team_events:
+                        team_events[event.team_id] = []
+                    team_events[event.team_id].append(event)
+            
+            if team_events:
+                context_lines.append("\nTeam Statistics:")
+                for team_id, events in team_events.items():
+                    context_lines.append(f"  {team_id}: {len(events)} events")
+        else:
+            context_lines.append(f"Match: {match_id} (Custom Video Upload)")
+            context_lines.append("Note: Official event data (StatsBomb) is not available for this match.")
+            context_lines.append("Analysis is based on Computer Vision physical metrics only.")
         
         # --- ENRICHMENT START ---
         # Fetch Metrics using PostgresMetricsRepository
@@ -129,7 +131,7 @@ def _build_match_context(match_id: str) -> str:
         if metrics_summary:
             # Physical Stats
             if metrics_summary.physical_stats:
-                context_lines.append("\nPhysical Statistics (Top Players):")
+                context_lines.append("\nPhysical Statistics (Computer Vision):")
                 # Sort by distance
                 sorted_stats = sorted(metrics_summary.physical_stats, key=lambda x: x.total_distance, reverse=True)[:5]
                 for p in sorted_stats:
@@ -142,6 +144,9 @@ def _build_match_context(match_id: str) -> str:
                     context_lines.append(f"  - Team {team_ppda.team_id}: PPDA {team_ppda.ppda:.2f}")
 
         # --- ENRICHMENT END ---
+
+        if not context_lines:
+             return "No data found for this match (neither events nor metrics)."
 
         return "\n".join(context_lines)
         

@@ -72,10 +72,11 @@ def process_video_task(self, video_path: str, output_path: str) -> dict:
         trajectory_data = [
             {
                 "frame_id": traj.frame_id,
-                "object_id": traj.object_id,
+                "player_id": traj.object_id,
                 "x": traj.x,
                 "y": traj.y,
-                "confidence": getattr(traj, 'confidence', 1.0)
+                "confidence": getattr(traj, 'confidence', 1.0),
+                "timestamp": traj.frame_id * 0.04  # Assuming 25fps for timestamp derivation
             }
             for traj in all_trajectories
         ]
