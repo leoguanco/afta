@@ -76,10 +76,10 @@ class PostgresMetricsRepository(MetricsRepositoryPort):
         stmt = pg_insert(PhysicalStatsModel).values(
             match_id=match_id,
             player_id=player_id,
-            total_distance=total_distance,
-            max_speed=max_speed,
-            sprint_count=sprint_count,
-            avg_speed=avg_speed
+            total_distance=float(total_distance),
+            max_speed=float(max_speed),
+            sprint_count=int(sprint_count),
+            avg_speed=float(avg_speed)
         )
         
         # On conflict, update the values
@@ -110,9 +110,9 @@ class PostgresMetricsRepository(MetricsRepositoryPort):
         stmt = pg_insert(PPDAStatsModel).values(
             match_id=match_id,
             team_id=team_id,
-            passes_allowed=passes_allowed,
-            defensive_actions=defensive_actions,
-            ppda=ppda
+            passes_allowed=int(passes_allowed),
+            defensive_actions=int(defensive_actions),
+            ppda=float(ppda)
         )
         
         stmt = stmt.on_conflict_do_update(
