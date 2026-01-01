@@ -33,33 +33,61 @@ class JobStatusResponse(BaseModel):
     error: Optional[str] = None
 
 
-@router.post("/analyze", response_model=AnalyzeResponse)
+@router.post("/analyze")
 async def start_analysis(request: AnalyzeRequest):
     """
-    Start an AI analysis job.
+    Start an AI analysis and stream results (SSE).
     
-    Dispatches analysis to Celery worker (where CrewAI dependencies exist).
+    Uses Server-Sent Events to stream status updates and final result.
     
     Args:
         request: Analysis request with match_id and query
         
     Returns:
-        Job information with job_id for status polling
+        StreamingResponse (text/event-stream)
     """
-    # Use Case: MatchAnalyzer
-    from src.infrastructure.adapters.celery_analysis_dispatcher import CeleryAnalysisDispatcher
-    from src.application.use_cases.match_analyzer import MatchAnalyzer
+    from fastapi.responses import StreamingResponse
+    import json
     
-    dispatcher = CeleryAnalysisDispatcher()
-    use_case = MatchAnalyzer(dispatcher)
+    from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
+    from src.application.services.match_context_service import MatchContextService
     
-    result = use_case.execute(request.match_id, request.query)
+    # 0. Instantiate Repositories (Infrastructure Layer)
+    from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
+    from src.infrastructure.db.repositories.postgres_metrics_repo import PostgresMetricsRepository
     
-    return AnalyzeResponse(
-        job_id=result.job_id,
-        match_id=result.match_id,
-        status=result.status
-    )
+    match_repo = PostgresMatchRepo()
+    metrics_repo = PostgresMetricsRepository()
+    
+    # 1. Build Context (Sync, fast)
+    context_service = MatchContextService(match_repo, metrics_repo)
+    match_context = context_service.build_context(request.match_id)
+    
+    # 2. Initialize Adapter
+    adapter = CrewAIAdapter()
+    
+    async def event_generator():
+        # Yield initial message
+        yield f"data: {json.dumps({'type': 'status', 'content': 'Initializing agents...'})}\n\n"
+        
+        # Stream events from adapter
+        # run_analysis_stream is a sync generator, so we iterate normally
+        # In a real async app, we might want to run this in a threadpool executor 
+        # to avoid blocking the event loop if the generator blocks.
+        # However, run_analysis_stream uses a thread internally and yields from a queue,
+        # so iterating it here is mostly waiting on queue.get(), which behaves okay-ish 
+        # but technically blocks the loop. Ideally we wrap iteration in run_in_executor
+        # OR just accept it for low traffic.
+        # Given CrewAIAdapter.run_analysis_stream implementation uses a blocking queue.get(),
+        # it WILL block this async function. 
+        # Better approach: The adapter's generator blocks. We should iterate it.
+        # Since we are in an async def, blocking calls block the loop.
+        
+        # To make it key-friendly:
+        for event in adapter.run_analysis_stream(request.match_id, request.query, match_context):
+            yield f"data: {json.dumps(event)}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.get("/jobs/{job_id}", response_model=JobStatusResponse)

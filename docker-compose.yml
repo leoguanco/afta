@@ -17,6 +17,11 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/afta
       - REDIS_URL=redis://redis:6379/0
       - MINIO_ENDPOINT=minio:9000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-pro}
     depends_on:
       - db
       - redis

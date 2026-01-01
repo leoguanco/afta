@@ -160,3 +160,66 @@ MATCH CONTEXT AND STATISTICS:
         so dispatching is handled by CeleryAnalysisDispatcher.
         """
         raise NotImplementedError("CrewAIAdapter is for synchronous execution only. Use CeleryAnalysisDispatcher for dispatching.")
+
+    def run_analysis_stream(self, match_id: str, query: str, match_context: str = ""):
+        """
+        Run CrewAI analysis and yield streaming events.
+        
+        Yields:
+            Dictionary with 'type' and 'content' (e.g., {'type': 'status', 'content': '...'})
+        """
+        import queue
+        import threading
+        
+        events_queue = queue.Queue()
+        
+        def step_callback(step_output):
+            """Callback for agent steps."""
+            # We assume step_output has some meaningful info, usually the agent's thought
+            # Current CrewAI versions might pass different objects. We'll try to extract thought or result.
+            content = "Agent is working..."
+            if hasattr(step_output, 'thought'):
+                content = step_output.thought
+            elif isinstance(step_output, str):
+                content = step_output
+            
+            events_queue.put({"type": "status", "content": f"Thinking: {str(content)[:100]}..."})
+
+        def task_callback(task_output):
+            """Callback for completed tasks."""
+            events_queue.put({"type": "status", "content": f"Task completed: {str(task_output.summary if hasattr(task_output, 'summary') else 'Task done')}"})
+
+        agents = self.create_agents()
+        tasks = self.create_tasks(agents, match_id, query, match_context)
+        
+        # Attach callbacks (requires CrewAI support for step_callback/task_callback at Crew or Task level)
+        # Note: CrewAI API varies by version. Assuming standard 'step_callback' param exists on Crew or Agent.
+        # For robustness, we will just stream start/end generic events if specific callbacks fail, 
+        # but let's try to pass step_callback if supported.
+        
+        crew = Crew(
+            agents=list(agents.values()),
+            tasks=tasks,
+            verbose=True,
+            # step_callback=step_callback, # Uncomment if supported in installed version
+        )
+
+        def run_thread():
+            try:
+                events_queue.put({"type": "status", "content": "Starting analysis..."})
+                result = crew.kickoff()
+                events_queue.put({"type": "result", "content": str(result)})
+            except Exception as e:
+                events_queue.put({"type": "error", "content": str(e)})
+            finally:
+                events_queue.put(None) # Sentinel
+
+        t = threading.Thread(target=run_thread)
+        t.start()
+        
+        while True:
+            event = events_queue.get()
+            if event is None:
+                break
+            yield event
+

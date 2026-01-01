@@ -21,3 +21,7 @@ numpy>=1.26.0
 statsbombpy>=1.13.0
 minio>=7.2.0
 
+# AI/ML Stack (Required for Streaming API)
+crewai
+langchain_openai
+langchain-google-genai
