@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from typing import Optional
 
 from src.infrastructure.worker.celery_app import celery_app
+from src.infrastructure.di.container import Container
+import anyio
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -49,43 +51,35 @@ async def start_analysis(request: AnalyzeRequest):
     from fastapi.responses import StreamingResponse
     import json
     
-    from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
-    from src.application.services.match_context_service import MatchContextService
+    from fastapi.responses import StreamingResponse
+    import json
     
-    # 0. Instantiate Repositories (Infrastructure Layer)
-    from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
-    from src.infrastructure.db.repositories.postgres_metrics_repo import PostgresMetricsRepository
+    # 1. Build Context (Run sync DB call in thread)
+    context_service = Container.get_match_context_service()
+    match_context = await anyio.to_thread.run_sync(context_service.build_context, request.match_id)
     
-    match_repo = PostgresMatchRepo()
-    metrics_repo = PostgresMetricsRepository()
+    # 2. Get Adapter
+    adapter = Container.get_crewai_adapter()
     
-    # 1. Build Context (Sync, fast)
-    context_service = MatchContextService(match_repo, metrics_repo)
-    match_context = context_service.build_context(request.match_id)
-    
-    # 2. Initialize Adapter
-    adapter = CrewAIAdapter()
+
     
     async def event_generator():
         # Yield initial message
         yield f"data: {json.dumps({'type': 'status', 'content': 'Initializing agents...'})}\n\n"
         
-        # Stream events from adapter
-        # run_analysis_stream is a sync generator, so we iterate normally
-        # In a real async app, we might want to run this in a threadpool executor 
-        # to avoid blocking the event loop if the generator blocks.
-        # However, run_analysis_stream uses a thread internally and yields from a queue,
-        # so iterating it here is mostly waiting on queue.get(), which behaves okay-ish 
-        # but technically blocks the loop. Ideally we wrap iteration in run_in_executor
-        # OR just accept it for low traffic.
-        # Given CrewAIAdapter.run_analysis_stream implementation uses a blocking queue.get(),
-        # it WILL block this async function. 
-        # Better approach: The adapter's generator blocks. We should iterate it.
-        # Since we are in an async def, blocking calls block the loop.
+        # Run the blocking generator in a thread pool to avoid blocking the event loop
+        iterator = adapter.run_analysis_stream(request.match_id, request.query, match_context)
         
-        # To make it key-friendly:
-        for event in adapter.run_analysis_stream(request.match_id, request.query, match_context):
-            yield f"data: {json.dumps(event)}\n\n"
+        while True:
+            try:
+                # Retrieve next event in a thread
+                event = await anyio.to_thread.run_sync(next, iterator)
+                yield f"data: {json.dumps(event)}\n\n"
+            except StopIteration:
+                break
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+                break
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 

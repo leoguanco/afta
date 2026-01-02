@@ -9,9 +9,7 @@ import time
 from celery import shared_task
 from prometheus_client import Histogram, Counter as PromCounter
 
-from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
-from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
-from src.infrastructure.db.repositories.postgres_metrics_repo import PostgresMetricsRepository
+from src.infrastructure.di.container import Container
 
 # Metrics
 llm_request_duration = Histogram(
@@ -48,7 +46,7 @@ def run_crewai_analysis_task(match_id: str, query: str) -> dict:
         match_context = _build_match_context(match_id)
         
         # Initialize CrewAI and run analysis with context
-        adapter = CrewAIAdapter()
+        adapter = Container.get_crewai_adapter()
         result_text = adapter.run_analysis(match_id, query, match_context)
         
         duration = time.time() - start_time
@@ -90,11 +88,5 @@ def _build_match_context(match_id: str) -> str:
     Returns:
         Formatted string with match statistics
     """
-    from src.application.services.match_context_service import MatchContextService
-    
-    # Instantiate concrete logic here (Infrastructure Layer)
-    repo = PostgresMatchRepo()
-    metrics_repo = PostgresMetricsRepository()
-    
-    service = MatchContextService(repo, metrics_repo)
-    return service.build_context(match_id)
+    # Delegate to DI Container
+    return Container.get_match_context_service().build_context(match_id)

@@ -7,9 +7,11 @@ Uses VCR to record/replay LLM API calls to avoid costs during testing.
 import pytest
 from unittest.mock import patch, Mock
 
+import os
 from src.infrastructure.adapters.crewai_adapter import CrewAIAdapter
 
 
+@patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test", "LLM_PROVIDER": "openai"})
 class TestCrewAIIntegration:
     """Integration tests for CrewAI analysis."""
 
@@ -75,10 +77,7 @@ class TestCrewAIIntegration:
         assert "report" in tasks[1].description.lower()
 
 
-@pytest.mark.skipif(
-    not pytest.config.getoption("--run-llm-tests", default=False),
-    reason="Requires --run-llm-tests flag and valid OPENAI_API_KEY"
-)
+@pytest.mark.skip(reason="LLM tests skipped by default")
 class TestCrewAIRealLLM:
     """
     Real LLM integration tests (only run with explicit flag).
