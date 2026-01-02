@@ -88,6 +88,13 @@ class PlayerTrajectory:
         
         velocities = self._get_velocities()
         
+        # Sanity Check: If impossible speeds detected (> 45 km/h ~ 12.5 m/s), clip them.
+        # This handles tracking errors (teleportation across pitch).
+        max_v = np.max(velocities) if len(velocities) > 0 else 0
+        if max_v > (45.0 / 3.6):  # 12.5 m/s
+            self.clip_outliers(max_speed_kmh=45.0)
+            velocities = self._get_velocities()
+        
         # Total distance
         distances = velocities / self.fps
         total_distance_km = np.sum(distances) / 1000.0
@@ -166,6 +173,10 @@ class PlayerTrajectory:
             Array of velocities (m/s)
         """
         if self._velocities is not None:
+            return self._velocities
+        
+        if len(self.frames) < 2:
+            self._velocities = np.zeros(len(self.frames))
             return self._velocities
         
         x = np.array([f.x for f in self.frames])

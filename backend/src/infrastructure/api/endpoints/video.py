@@ -34,10 +34,13 @@ async def process_video(request: VideoProcessRequest):
     Returns immediately with a job_id for status polling.
     """
     from src.infrastructure.adapters.celery_video_dispatcher import CeleryVideoDispatcher
+    from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
     from src.application.use_cases.video_processor import VideoProcessor
     
     dispatcher = CeleryVideoDispatcher()
-    use_case = VideoProcessor(dispatcher)
+    match_repo = PostgresMatchRepo()
+    
+    use_case = VideoProcessor(dispatcher, match_repo)
     
     result = use_case.execute(request.video_path, request.output_path)
     
