@@ -44,6 +44,7 @@
 
 - **Architecture Pattern:** **Hexagonal (Ports & Adapters)**
   - `src/domain/`, `src/application/`, `src/infrastructure/`.
+  - **Dependency Injection:** Lightweight container `src/infrastructure/di/container.py` for managing singletons.
 - **Components:**
   - **Backend:** Python (FastAPI).
   - **Frontend:** Next.js (TypeScript).
