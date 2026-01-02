@@ -80,8 +80,8 @@ class MatchContextService:
                 sorted_stats = sorted(physical_stats, key=lambda x: x['total_distance'], reverse=True)[:5]
                 for p in sorted_stats:
                     context_lines.append(
-                        f"  - Player {p['player_id']}: {p['total_distance']:.1f}m run, "
-                        f"{p['sprint_count']} sprints, Max Speed: {p['max_speed']:.1f} m/s"
+                        f"  - Player {p['player_id']}: {p['total_distance']:.2f}km run, "
+                        f"{p['sprint_count']} sprints, Max Speed: {p['max_speed']:.1f} km/h"
                     )
 
             # Fetch detailed PPDA

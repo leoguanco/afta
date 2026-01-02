@@ -296,7 +296,7 @@ class PlayerTrajectory:
                 scale = max_displacement / distance
                 # Create new frame with clipped position
                 # Note: frames list needs to be mutable for this
-                self.frames[i] = TrajectoryFrame(
+                self.frames[i] = FramePosition(
                     frame_id=curr.frame_id,
                     x=prev.x + dx * scale,
                     y=prev.y + dy * scale,
