@@ -55,9 +55,20 @@ def calculate_match_metrics_task(
                 "events_processed": result.events_processed,
             }
             
-            # Add aggregate metrics if available
-            if hasattr(result, 'aggregate_metrics') and result.aggregate_metrics:
-                metrics_for_indexing.update(result.aggregate_metrics)
+            # Query calculated metrics from repository for RAG indexing
+            # PPDA metrics
+            home_ppda = repository.get_ppda(match_id, "home")
+            away_ppda = repository.get_ppda(match_id, "away")
+            if home_ppda:
+                metrics_for_indexing["home_ppda"] = home_ppda.get("ppda", 0)
+            if away_ppda:
+                metrics_for_indexing["away_ppda"] = away_ppda.get("ppda", 0)
+            
+            # Physical stats - calculate total distance
+            physical_stats = repository.get_physical_stats(match_id)
+            if physical_stats:
+                total_distance = sum(p.get("total_distance", 0) for p in physical_stats)
+                metrics_for_indexing["total_distance"] = total_distance
             
             index_result = indexer.execute(
                 match_id=match_id,
