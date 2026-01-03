@@ -14,9 +14,12 @@ from src.domain.events.tracking_completed import TrackingCompletedEvent
 from src.domain.value_objects.trajectory import Trajectory
 from src.domain.services.trajectory_smoother import TrajectorySmoother, TrajectoryPoint
 from src.domain.services.track_cleaner import TrackCleaner, CleaningConfig
+from src.domain.services.scene_detector import SceneDetectorConfig
 from src.infrastructure.storage.minio_adapter import MinIOAdapter
 from src.infrastructure.vision.byte_tracker import ByteTrackerAdapter
 from src.infrastructure.vision.yolo_detector import YOLODetector
+from src.infrastructure.vision.opencv_scene_detector import OpenCVSceneDetector
+from src.infrastructure.ml.action_classifier import HeuristicActionClassifier
 from src.infrastructure.worker.celery_app import celery_app
 from src.infrastructure.adapters.savgol_smoother import SavitzkyGolaySmoother
 
@@ -170,6 +173,48 @@ def process_video_task(
             metrics_triggered = True
         else:
             logger.info(f"Skipping metrics for highlight mode (match_id: {match_id})")
+            
+            # =====================================================
+            # HIGHLIGHT MODE: Scene Detection & Classification
+            # =====================================================
+            try:
+                # Detect scenes in the video
+                scene_detector = OpenCVSceneDetector(SceneDetectorConfig(
+                    difference_threshold=0.30,
+                    min_scene_frames=30
+                ))
+                scenes = scene_detector.detect_scenes_fast(video_path, sample_rate=5)
+                logger.info(f"Detected {len(scenes)} scenes in highlight video")
+                
+                # Classify each scene using tracking data
+                action_classifier = HeuristicActionClassifier(
+                    pitch_width=105.0, 
+                    pitch_height=68.0
+                )
+                
+                scene_results = []
+                for scene in scenes:
+                    classification = action_classifier.classify_segment(
+                        cleaned_points,
+                        scene.start_frame,
+                        scene.end_frame
+                    )
+                    scene_results.append({
+                        "scene_label": scene.label,
+                        "start_frame": scene.start_frame,
+                        "end_frame": scene.end_frame,
+                        "action_type": classification.action_type.value,
+                        "confidence": classification.confidence,
+                        "description": classification.description
+                    })
+                    logger.info(
+                        f"Scene {scene.label}: {classification.action_type.value} "
+                        f"(confidence: {classification.confidence:.0%})"
+                    )
+                
+            except Exception as scene_err:
+                logger.warning(f"Scene detection failed (non-critical): {scene_err}")
+                scene_results = []
 
         return {
             "status": "success",
@@ -178,7 +223,8 @@ def process_video_task(
             "frame_count": frame_id,
             "trajectory_count": len(all_trajectories),
             "event_id": tracking_event.event_id,
-            "metrics_triggered": metrics_triggered
+            "metrics_triggered": metrics_triggered,
+            "scenes": scene_results if mode == "highlights" else None
         }
 
     except S3Error as s3_exc:

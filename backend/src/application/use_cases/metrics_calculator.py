@@ -50,7 +50,8 @@ class MetricsCalculator:
         self,
         match_id: str,
         tracking_data: List[Dict[str, Any]],
-        event_data: List[Dict[str, Any]]
+        event_data: List[Dict[str, Any]],
+        sync_offset_seconds: float = 0.0
     ) -> MetricsResult:
         """
         Execute metrics calculation.
@@ -59,6 +60,7 @@ class MetricsCalculator:
             match_id: Match identifier
             tracking_data: Raw tracking data
             event_data: Raw event data
+            sync_offset_seconds: Time offset for syncing video with match time
             
         Returns:
             MetricsResult summary

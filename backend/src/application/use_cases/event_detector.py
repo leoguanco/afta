@@ -30,6 +30,7 @@ class InferredEvent:
     team_id: str
     location: Tuple[float, float]
     confidence: float = 1.0
+    actor_names: List[str] = field(default_factory=list)  # Player names if available
 
 
 @dataclass 
@@ -241,3 +242,34 @@ class HeuristicEventDetector:
                 ))
         
         return events
+    
+    def detect_events_with_names(
+        self,
+        tracking_points: List[TrajectoryPoint],
+        match_id: str
+    ) -> List[InferredEvent]:
+        """
+        Detect events and resolve player names from lineup.
+        
+        Args:
+            tracking_points: Smoothed/cleaned tracking points
+            match_id: Match ID for lineup lookup
+            
+        Returns:
+            List of inferred events with player names
+        """
+        # Import here to avoid circular dependency
+        from src.infrastructure.api.endpoints.lineup import get_player_name
+        
+        events = self.detect_events(tracking_points)
+        
+        # Resolve player names for each event
+        for event in events:
+            names = []
+            for actor_id in event.actors:
+                name = get_player_name(match_id, actor_id)
+                names.append(name if name else f"Player {actor_id}")
+            event.actor_names = names
+        
+        return events
+
