@@ -19,17 +19,17 @@
 
 | Criteria ID | Acceptance Criteria                                                                        | Status |
 | :---------- | :----------------------------------------------------------------------------------------- | :----- |
-| US1.1       | The system SHALL classify each tracking frame into one of 4 phases.                        | [ ]    |
-| US1.2       | The classification SHALL use player positions, ball position, and recent movement vectors. | [ ]    |
-| US1.3       | The system SHALL achieve >80% accuracy on labeled validation data.                         | [ ]    |
+| US1.1       | The system SHALL classify each tracking frame into one of 4 phases.                        | [x]    |
+| US1.2       | The classification SHALL use player positions, ball position, and recent movement vectors. | [x]    |
+| US1.3       | The system SHALL achieve >80% accuracy on labeled validation data.                         | [x]    |
 
 ### **User Story 2:** As a **Data Scientist**, I want **to train phase models on labeled data**, so that **I can improve classification accuracy.**
 
 | Criteria ID | Acceptance Criteria                                                     | Status |
 | :---------- | :---------------------------------------------------------------------- | :----- |
-| US2.1       | The system SHALL support training from labeled frame data (supervised). | [ ]    |
-| US2.2       | The system SHALL persist trained models to object storage.              | [ ]    |
-| US2.3       | The system SHALL support model versioning and rollback.                 | [ ]    |
+| US2.1       | The system SHALL support training from labeled frame data (supervised). | [x]    |
+| US2.2       | The system SHALL persist trained models to object storage.              | [x]    |
+| US2.3       | The system SHALL support model versioning and rollback.                 | [x]    |
 
 ---
 

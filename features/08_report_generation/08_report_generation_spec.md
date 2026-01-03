@@ -19,23 +19,23 @@
 
 | Criteria ID | Acceptance Criteria                                                                 | Status |
 | :---------- | :---------------------------------------------------------------------------------- | :----- |
-| US1.1       | The system SHALL generate a PDF report with match summary, key metrics, and charts. | [ ]    |
-| US1.2       | The report SHALL include pitch visualizations (heatmaps, pass networks).            | [ ]    |
-| US1.3       | The report SHALL be generated asynchronously and downloadable via API.              | [ ]    |
+| US1.1       | The system SHALL generate a PDF report with match summary, key metrics, and charts. | [x]    |
+| US1.2       | The report SHALL include pitch visualizations (heatmaps, pass networks).            | [x]    |
+| US1.3       | The report SHALL be generated asynchronously and downloadable via API.              | [x]    |
 
 ### **User Story 2:** As a **Developer**, I want **structured JSON export**, so that **I can integrate with other tools.**
 
 | Criteria ID | Acceptance Criteria                                                | Status |
 | :---------- | :----------------------------------------------------------------- | :----- |
-| US2.1       | The system SHALL export all calculated metrics as structured JSON. | [ ]    |
-| US2.2       | The JSON schema SHALL be documented and versioned.                 | [ ]    |
+| US2.1       | The system SHALL export all calculated metrics as structured JSON. | [x]    |
+| US2.2       | The JSON schema SHALL be documented and versioned.                 | [x]    |
 
 ### **User Story 3:** As an **Analyst**, I want **LLM narrative in the report**, so that **key insights are explained in natural language.**
 
 | Criteria ID | Acceptance Criteria                                                        | Status |
 | :---------- | :------------------------------------------------------------------------- | :----- |
-| US3.1       | The PDF SHALL include an "AI Analysis" section with LLM-generated content. | [ ]    |
-| US3.2       | The narrative SHALL reference specific metrics and events from the match.  | [ ]    |
+| US3.1       | The PDF SHALL include an "AI Analysis" section with LLM-generated content. | [x]    |
+| US3.2       | The narrative SHALL reference specific metrics and events from the match.  | [x]    |
 
 ---
 

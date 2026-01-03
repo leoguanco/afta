@@ -19,23 +19,23 @@
 
 | Criteria ID | Acceptance Criteria                                                      | Status |
 | :---------- | :----------------------------------------------------------------------- | :----- |
-| US1.1       | The system SHALL extract possession sequences from tracking data.        | [ ]    |
-| US1.2       | The system SHALL cluster similar sequences using unsupervised learning.  | [ ]    |
-| US1.3       | Each cluster SHALL be labeled with a human-readable pattern description. | [ ]    |
+| US1.1       | The system SHALL extract possession sequences from tracking data.        | [x]    |
+| US1.2       | The system SHALL cluster similar sequences using unsupervised learning.  | [x]    |
+| US1.3       | Each cluster SHALL be labeled with a human-readable pattern description. | [x]    |
 
 ### **User Story 2:** As a **Coach**, I want **pattern statistics per match**, so that **I can see which patterns we use most.**
 
 | Criteria ID | Acceptance Criteria                                                        | Status |
 | :---------- | :------------------------------------------------------------------------- | :----- |
-| US2.1       | The system SHALL count occurrences of each pattern per match.              | [ ]    |
-| US2.2       | The system SHALL calculate success rate for each pattern (xT gain, shots). | [ ]    |
+| US2.1       | The system SHALL count occurrences of each pattern per match.              | [x]    |
+| US2.2       | The system SHALL calculate success rate for each pattern (xT gain, shots). | [x]    |
 
 ### **User Story 3:** As an **Analyst**, I want **example sequences for each pattern**, so that **I can review them in video.**
 
 | Criteria ID | Acceptance Criteria                                                           | Status |
 | :---------- | :---------------------------------------------------------------------------- | :----- |
-| US3.1       | The system SHALL store representative sequences (centroids) for each cluster. | [ ]    |
-| US3.2       | The system SHALL provide timestamp ranges for pattern occurrences.            | [ ]    |
+| US3.1       | The system SHALL store representative sequences (centroids) for each cluster. | [x]    |
+| US3.2       | The system SHALL provide timestamp ranges for pattern occurrences.            | [x]    |
 
 ---
 
