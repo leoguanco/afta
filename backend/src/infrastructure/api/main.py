@@ -36,6 +36,7 @@ from src.infrastructure.api.endpoints.metrics import router as metrics_router
 from src.infrastructure.api.endpoints.phases import router as phases_router
 from src.infrastructure.api.endpoints.patterns import router as patterns_router
 from src.infrastructure.api.endpoints.matches import router as matches_router
+from src.infrastructure.api.endpoints.indexing import router as indexing_router
 
 app = FastAPI(title="Football Intelligence Engine API", version="0.1.0")
 
@@ -61,6 +62,7 @@ app.include_router(metrics_router)
 app.include_router(phases_router)
 app.include_router(patterns_router)
 app.include_router(matches_router)
+app.include_router(indexing_router)
 
 # Observability
 metrics_app = make_asgi_app()

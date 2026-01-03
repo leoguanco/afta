@@ -23,6 +23,7 @@ langchain
 langchain_openai
 langchain-google-genai
 chromadb
+sentence-transformers  # Local embeddings for RAG
 
 # Computer Vision (for GPU worker)
 opencv-python-headless>=4.9.0

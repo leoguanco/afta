@@ -52,16 +52,15 @@ class ChromaDBAdapter(VectorStorePort):
         if self._client is None:
             try:
                 import chromadb
-                from chromadb.config import Settings
                 
-                self._client = chromadb.Client(Settings(
-                    chroma_db_impl="duckdb+parquet",
-                    persist_directory=self.persist_directory,
-                    anonymized_telemetry=False
-                ))
+                # Use new ChromaDB API (v0.4+)
+                # PersistentClient for persistent storage
+                self._client = chromadb.PersistentClient(
+                    path=self.persist_directory
+                )
                 logger.info(f"ChromaDB client initialized at {self.persist_directory}")
-            except ImportError:
-                logger.warning("ChromaDB not installed, using in-memory fallback")
+            except Exception as e:
+                logger.warning(f"ChromaDB persistent storage failed ({e}), using in-memory fallback")
                 import chromadb
                 self._client = chromadb.Client()
                 

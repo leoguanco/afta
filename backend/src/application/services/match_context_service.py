@@ -4,32 +4,41 @@ Match Context Service - Application Layer
 Service for building rich match context strings for AI analysis.
 """
 from collections import Counter
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from src.domain.ports.match_repository import MatchRepository
 from src.domain.ports.metrics_repository import MetricsRepository
+from src.domain.ports.vector_store_port import VectorStorePort
 
 
 class MatchContextService:
     """Service to build context strings from match data."""
     
-    def __init__(self, match_repo: MatchRepository, metrics_repo: MetricsRepository):
+    def __init__(
+        self, 
+        match_repo: MatchRepository, 
+        metrics_repo: MetricsRepository,
+        vector_store: Optional[VectorStorePort] = None
+    ):
         """
         Initialize with data repositories (ports).
         
         Args:
             match_repo: Repository for match event data
             metrics_repo: Repository for calculated metrics
+            vector_store: Optional vector store for RAG retrieval
         """
         self.match_repo = match_repo
         self.metrics_repo = metrics_repo
+        self.vector_store = vector_store
 
-    def build_context(self, match_id: str) -> str:
+    def build_context(self, match_id: str, query: Optional[str] = None) -> str:
         """
         Build a formatted context string for the match.
         
         Args:
             match_id: Match identifier.
+            query: Optional query for RAG retrieval enhancement.
             
         Returns:
             Formatted string with match stats and metrics.
@@ -120,6 +129,22 @@ class MatchContextService:
                 context_lines.append("\nPressure Metrics (PPDA):")
                 context_lines.extend(ppda_lines)
 
+            # --- RAG Enhancement ---
+            if self.vector_store and query:
+                try:
+                    rag_results = self.vector_store.query(
+                        query_text=query,
+                        n_results=5,
+                        filter_metadata={"match_id": match_id}
+                    )
+                    if rag_results:
+                        context_lines.append("\nRelevant Context (RAG):")
+                        for result in rag_results:
+                            context_lines.append(f"  - {result.content}")
+                except Exception as rag_err:
+                    # Don't fail the whole context if RAG fails
+                    context_lines.append(f"\n(RAG retrieval skipped: {str(rag_err)})")
+
             if not context_lines:
                  return "No data found for this match (neither events nor metrics)."
 
@@ -127,3 +152,4 @@ class MatchContextService:
             
         except Exception as e:
             return f"Error loading match context: {str(e)}"
+

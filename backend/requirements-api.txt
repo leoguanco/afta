@@ -25,3 +25,7 @@ minio>=7.2.0
 crewai
 langchain_openai
 langchain-google-genai
+
+# RAG (Required for indexing API endpoints)
+chromadb
+sentence-transformers
