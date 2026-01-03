@@ -6,11 +6,15 @@ Follows "Feature + Action + er" naming convention.
 """
 from dataclasses import dataclass
 from typing import List, Dict, Any
+import logging
 
 from src.domain.entities.player_trajectory import PlayerTrajectory, FramePosition
 from src.domain.entities.match_frame import MatchFrame, PlayerPosition, BallPosition
 from src.domain.entities.tactical_match import TacticalMatch, MatchEvent, EventType
 from src.domain.ports.metrics_repository import MetricsRepository
+from src.domain.services.trajectory_smoother import TrajectoryPoint
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -86,6 +90,52 @@ class MetricsCalculator:
             )
         
         # 3. Tactical Metrics (PPDA)
+        # If no event data provided (video-only), infer events from tracking
+        if not event_data:
+            logger.info("No event data provided, using heuristic event detection")
+            from src.application.use_cases.event_detector import (
+                HeuristicEventDetector, InferredEventType
+            )
+            
+            # Convert tracking data to TrajectoryPoints
+            trajectory_points = [
+                TrajectoryPoint(
+                    frame_id=d["frame_id"],
+                    object_id=d["player_id"],
+                    x=d["x"],
+                    y=d["y"],
+                    timestamp=d.get("timestamp", 0),
+                    object_type=d.get("object_type", "player"),
+                    confidence=d.get("confidence", 1.0)
+                )
+                for d in tracking_data
+            ]
+            
+            # Detect events
+            detector = HeuristicEventDetector()
+            inferred_events = detector.detect_events(trajectory_points)
+            
+            # Convert inferred events to format expected by TacticalMatch
+            event_data = []
+            for ie in inferred_events:
+                event_type_map = {
+                    InferredEventType.PASS_COMPLETE: "pass",
+                    InferredEventType.PRESSURE: "defensive_action",
+                    InferredEventType.LOSS_OF_POSSESSION: "interception",
+                }
+                if ie.event_type in event_type_map:
+                    event_data.append({
+                        "event_id": f"inferred_{ie.frame_start}",
+                        "event_type": event_type_map[ie.event_type],
+                        "team_id": ie.team_id,
+                        "player_id": str(ie.actors[0]) if ie.actors else "unknown",
+                        "timestamp": ie.frame_start * 0.04,  # 25fps
+                        "x": ie.location[0],
+                        "y": ie.location[1]
+                    })
+            
+            logger.info(f"Inferred {len(event_data)} events from tracking data")
+        
         tactical_match = self._build_tactical_match(match_id, event_data)
         
         ppda_home = tactical_match.calculate_ppda("home", "away")

@@ -54,6 +54,9 @@
 | **Phase Classification** | ML-based 4-phase game state detection           | [features/07_phase_classification/07_phase_classification_spec.md](features/07_phase_classification/07_phase_classification_spec.md) |
 | **Report Generation**    | PDF/JSON export with charts and LLM narrative   | [features/08_report_generation/08_report_generation_spec.md](features/08_report_generation/08_report_generation_spec.md)             |
 | **Pattern Detection**    | Unsupervised ML clustering of tactical patterns | [features/09_pattern_detection/09_pattern_detection_spec.md](features/09_pattern_detection/09_pattern_detection_spec.md)             |
+| **Event Recognition**    | Heuristic & AI-based event inference from video | [features/10_event_recognition/10_event_recognition_spec.md](features/10_event_recognition/10_event_recognition_spec.md)             |
+| **Match Metadata**       | Team names, lineups, video-data sync            | [features/11_match_metadata/11_match_metadata_spec.md](features/11_match_metadata/11_match_metadata_spec.md)                         |
+| **Highlight Mode**       | Scene detection, per-clip analysis              | [features/12_highlight_mode/12_highlight_mode_spec.md](features/12_highlight_mode/12_highlight_mode_spec.md)                         |
 | **UI Dashboard**         | Next.js, Interactive Pitch, Video Sync          | [features/ui_dashboard/ui_dashboard_spec.md](features/ui_dashboard/ui_dashboard_spec.md)                                             |
 
 ---

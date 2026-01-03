@@ -11,14 +11,24 @@ class CeleryVideoDispatcher(VideoProcessingPort):
     Adapter to dispatch video processing jobs to Celery workers.
     """
     
-    def start_processing(self, video_path: str, output_path: str) -> str:
+    def start_processing(
+        self, 
+        video_path: str, 
+        output_path: str,
+        mode: str = "full_match"
+    ) -> str:
         """
         Dispatch the process_video_task to Celery.
+        
+        Args:
+            video_path: Path to input video
+            output_path: Path to output trajectory file
+            mode: Processing mode - "full_match" or "highlights"
         """
         # Using string name to resolve task (loose coupling)
-        # Assuming the task is registered in the worker
         task = celery_app.send_task(
             'src.infrastructure.worker.tasks.vision_tasks.process_video_task',
-            args=[video_path, output_path]
+            args=[video_path, output_path],
+            kwargs={'mode': mode}
         )
         return task.id

@@ -12,13 +12,19 @@ class VideoProcessingPort(ABC):
     """
     
     @abstractmethod
-    def start_processing(self, video_path: str, output_path: str) -> str:
+    def start_processing(
+        self, 
+        video_path: str, 
+        output_path: str,
+        mode: str = "full_match"
+    ) -> str:
         """
         Start an asynchronous video processing job.
         
         Args:
             video_path: Path to input video
             output_path: Path to output trajectory file
+            mode: Processing mode - "full_match" or "highlights"
             
         Returns:
             Job ID of the started process

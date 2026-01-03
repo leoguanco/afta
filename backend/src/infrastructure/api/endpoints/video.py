@@ -3,16 +3,28 @@ Video API Endpoints - Infrastructure Layer
 
 Endpoints for video processing and calibration.
 """
+from typing import Optional, Literal
 from fastapi import APIRouter
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/v1", tags=["video"])
 
 
+class MatchMetadata(BaseModel):
+    """Optional match metadata for video uploads."""
+    home_team: str = "Home"
+    away_team: str = "Away"
+    date: Optional[str] = None
+    competition: Optional[str] = None
+
+
 class VideoProcessRequest(BaseModel):
     """Request body for video processing endpoint."""
     video_path: str
     output_path: str
+    metadata: Optional[MatchMetadata] = None
+    sync_offset_seconds: float = 0.0
+    mode: Literal["full_match", "highlights"] = "full_match"
 
 
 class CalibrationRequest(BaseModel):
@@ -42,7 +54,23 @@ async def process_video(request: VideoProcessRequest):
     
     use_case = VideoProcessor(dispatcher, match_repo)
     
-    result = use_case.execute(request.video_path, request.output_path)
+    # Convert MatchMetadata to dict if provided
+    metadata_dict = None
+    if request.metadata:
+        metadata_dict = {
+            "home_team": request.metadata.home_team,
+            "away_team": request.metadata.away_team,
+            "date": request.metadata.date,
+            "competition": request.metadata.competition,
+        }
+    
+    result = use_case.execute(
+        video_path=request.video_path, 
+        output_path=request.output_path,
+        metadata=metadata_dict,
+        sync_offset_seconds=request.sync_offset_seconds,
+        mode=request.mode
+    )
     
     return {
         "job_id": result.job_id,
