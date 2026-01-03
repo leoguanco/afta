@@ -8,6 +8,21 @@ The **Football Intelligence Engine** is a comprehensive system designed to inges
 
 It is built with a **Hexagonal Architecture** to ensure domain purity and uses a **Distributed Asynchronous** design to handle heavy computational loads (GPU Processing, LLM Reasoning).
 
+## ✨ Key Features
+
+| Feature                   | Description                                                |
+| ------------------------- | ---------------------------------------------------------- |
+| **Video Processing**      | YOLO + ByteTrack object detection and tracking             |
+| **Trajectory Smoothing**  | Savitzky-Golay filter for noise reduction                  |
+| **Track Cleaning**        | Ghost removal and fragmented track merging                 |
+| **Event Recognition**     | Heuristic-based possession, pass, and pressure detection   |
+| **Scene Detection**       | Automatic scene cuts for highlight videos                  |
+| **Action Classification** | Goal, shot, corner, celebration detection                  |
+| **Player Lineup Mapping** | Associate track IDs with real player names                 |
+| **RAG Integration**       | ChromaDB for contextual match analysis                     |
+| **PPDA Metrics**          | Pressing intensity calculation                             |
+| **Time Sync**             | Frame-to-timestamp conversion for StatsBomb data alignment |
+
 ## 🏗️ Architecture Stack
 
 - **Backend:** Python 3.10+, FastAPI (REST API), Celery (Async Workers).
@@ -33,38 +48,56 @@ afta/
 ├── backend/                    # Python Backend
 │   ├── src/
 │   │   ├── domain/             # Pure Business Logic (Hexagonal Core)
+│   │   │   ├── services/       # TrajectorySmoother, TrackCleaner, SceneDetector
+│   │   │   └── ports/          # Repository interfaces (LineupRepository, etc.)
 │   │   ├── application/        # Use Cases & Orchestration
+│   │   │   └── use_cases/      # VideoProcessor, MetricsCalculator, EventDetector
 │   │   └── infrastructure/     # Adapters (API, DB, Workers)
+│   │       ├── api/endpoints/  # REST endpoints (video, lineup, indexing)
+│   │       ├── ml/             # ActionClassifier
+│   │       └── vision/         # YOLODetector, ByteTracker, SceneDetector
 │   ├── tests/
-│   │   └── fakes.py            # Test doubles (Hexagonal testing)
-│   ├── docker/
-│   │   ├── Dockerfile.api      # Minimal deps for API
-│   │   ├── Dockerfile.worker   # Full ML stack for workers
-│   │   └── Dockerfile.gpu      # CUDA + PyTorch for vision
-│   ├── requirements-api.txt    # API dependencies
-│   └── requirements-worker.txt # Worker dependencies
+│   │   └── unit/               # 24 unit tests passing
+│   └── docker/
 ├── frontend/                   # Next.js Frontend
-│   ├── app/                    # App Router Pages
-│   └── components/             # Shadcn UI Components
-├── docker-compose.yml          # All services configuration
-└── feature_specs.md            # Feature specifications
+├── features/                   # Feature specifications (10+ specs)
+├── docker-compose.yml
+└── feature_specs.md
 ```
 
 ## 🔌 API Endpoints
 
-| Endpoint                        | Method | Description                      |
-| ------------------------------- | ------ | -------------------------------- |
-| `/health`                       | GET    | Real DB/Redis connectivity check |
-| `/docs`                         | GET    | OpenAPI documentation            |
-| `/api/v1/ingest`                | POST   | Start match data ingestion       |
-| `/api/v1/process-video`         | POST   | Start video tracking (GPU)       |
-| `/api/v1/calibrate`             | POST   | Compute pitch homography         |
-| `/api/v1/calculate-metrics`     | POST   | Calculate tactical metrics       |
-| `/api/v1/chat/analyze`          | POST   | Start AI analysis (CrewAI)       |
-| `/api/v1/chat/jobs/{id}`        | GET    | Poll job status                  |
-| `/api/v1/reports/generate`      | POST   | Generate tactical report         |
-| `/api/v1/patterns/detect`       | POST   | Detect tactical patterns         |
-| `/api/v1/matches/{id}/patterns` | GET    | Get discovered patterns          |
+| Endpoint                      | Method | Description                      |
+| ----------------------------- | ------ | -------------------------------- |
+| `/health`                     | GET    | Real DB/Redis connectivity check |
+| `/docs`                       | GET    | OpenAPI documentation            |
+| `/api/v1/ingest`              | POST   | Start match data ingestion       |
+| `/api/v1/process-video`       | POST   | Start video tracking (GPU)       |
+| `/api/v1/calculate-metrics`   | POST   | Calculate tactical metrics       |
+| `/api/v1/chat/analyze`        | POST   | Start AI analysis (CrewAI)       |
+| `/api/v1/lineups`             | POST   | Set player-track mappings 🆕     |
+| `/api/v1/lineups/{match_id}`  | GET    | Get lineup for match 🆕          |
+| `/api/v1/indexing/match/{id}` | POST   | Index match for RAG 🆕           |
+| `/api/v1/reports/generate`    | POST   | Generate tactical report         |
+| `/api/v1/patterns/detect`     | POST   | Detect tactical patterns         |
+
+### Video Processing Options
+
+```json
+POST /api/v1/process-video
+{
+  "video_path": "/data/match.mp4",
+  "output_path": "/output",
+  "metadata": {
+    "home_team": "Barcelona",
+    "away_team": "Real Madrid",
+    "date": "2025-01-03",
+    "competition": "La Liga"
+  },
+  "sync_offset_seconds": 300.0,
+  "mode": "full_match"  // or "highlights"
+}
+```
 
 ## 🚀 Quick Start (Local Development)
 
@@ -92,7 +125,6 @@ afta/
 3. **Initialize database (first time only):**
 
    ```bash
-   # From host machine
    docker exec afta-api python -m src.infrastructure.db.init_db
    ```
 
@@ -106,24 +138,22 @@ afta/
 
 We enforce **Test Driven Development** with **Hexagonal Architecture** testing patterns.
 
-- **Backend Tests:**
+```bash
+# Run all unit tests
+docker-compose exec api python -m pytest tests/unit -v
 
-  ```bash
-  cd backend
-  pytest tests/unit -v
-  ```
+# Current test count: 24 tests passing
+```
 
-- **Production Verification (E2E):** (Requires Docker running)
+**Test Coverage:**
 
-  ```bash
-  # Run full system verification (Ingestion -> DB -> Reports)
-  docker exec -e E2E_API_URL=http://localhost:8000 afta-api pytest tests/e2e -v
-  ```
-
-- **Test Architecture:**
-  - Uses **Fake implementations** instead of `mock.patch`
-  - See `tests/fakes.py` for `FakeMatchRepository`, `FakeStorageAdapter`, etc.
-  - 10/10 tests passing
+- TrajectorySmoother (3 tests)
+- TrackCleaner (3 tests)
+- HeuristicEventDetector (3 tests)
+- TimeSync (6 tests)
+- ActionClassifier (4 tests)
+- SceneDetector (3 tests)
+- Lineup utilities (2 tests)
 
 ## 📜 Documentation
 
@@ -134,17 +164,20 @@ Detailed specifications for each module:
 
 Feature specifications in `features/` directory:
 
-- [Infrastructure](features/01_infrastructure/01_infrastructure_spec.md)
-- [Data Ingestion](features/02_data_ingestion/02_data_ingestion_spec.md)
-- [Object Tracking](features/03_object_tracking/03_object_tracking_spec.md)
-- [Pitch Calibration](features/04_pitch_calibration/04_pitch_calibration_spec.md)
-- [Tactical Metrics](features/05_tactical_metrics/05_tactical_metrics_spec.md)
-- [Agentic Reasoning](features/06_agentic_reasoning/06_agentic_reasoning_spec.md)
-- [Phase Classification](features/07_phase_classification/07_phase_classification_spec.md) 🆕
-- [Report Generation](features/08_report_generation/08_report_generation_spec.md) 🆕
-- [Pattern Detection](features/09_pattern_detection/09_pattern_detection_spec.md) 🆕
-- [Design Specs](features/ui_dashboard/ui_dashboard_spec.md)
-- [Architecture & Flow Diagrams](docs/architecture_diagrams.md) 🆕
+| Feature              | Spec                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| Infrastructure       | [01_infrastructure](features/01_infrastructure/01_infrastructure_spec.md)                   |
+| Data Ingestion       | [02_data_ingestion](features/02_data_ingestion/02_data_ingestion_spec.md)                   |
+| Object Tracking      | [03_object_tracking](features/03_object_tracking/03_object_tracking_spec.md)                |
+| Pitch Calibration    | [04_pitch_calibration](features/04_pitch_calibration/04_pitch_calibration_spec.md)          |
+| Tactical Metrics     | [05_tactical_metrics](features/05_tactical_metrics/05_tactical_metrics_spec.md)             |
+| Agentic Reasoning    | [06_agentic_reasoning](features/06_agentic_reasoning/06_agentic_reasoning_spec.md)          |
+| Phase Classification | [07_phase_classification](features/07_phase_classification/07_phase_classification_spec.md) |
+| Report Generation    | [08_report_generation](features/08_report_generation/08_report_generation_spec.md)          |
+| Pattern Detection    | [09_pattern_detection](features/09_pattern_detection/09_pattern_detection_spec.md)          |
+| Event Recognition    | [10_event_recognition](features/10_event_recognition/10_event_recognition_spec.md) 🆕       |
+| Match Metadata       | [11_match_metadata](features/11_match_metadata/11_match_metadata_spec.md) 🆕                |
+| Highlight Mode       | [12_highlight_mode](features/12_highlight_mode/12_highlight_mode_spec.md) 🆕                |
 
 ---
 
