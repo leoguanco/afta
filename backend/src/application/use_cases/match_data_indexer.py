@@ -104,7 +104,13 @@ class MatchDataIndexer:
     def _format_event(self, event: Dict[str, Any]) -> str:
         """Format a single event for indexing."""
         event_type = event.get("type", "").lower()
-        significant_events = {"goal", "shot", "assist", "red_card", "yellow_card", "substitution"}
+        
+        # Significant events from StatsBomb or inferred
+        significant_events = {
+            "goal", "shot", "assist", "red_card", "yellow_card", "substitution",
+            # Action classifier outputs
+            "celebration", "corner", "freekick", "penalty", "foul", "save"
+        }
         
         if event_type not in significant_events:
             return ""
@@ -113,7 +119,11 @@ class MatchDataIndexer:
         team = event.get("team", "Unknown")
         minute = event.get("minute", 0)
         
-        return f"Minute {minute}: {player} ({team}) - {event_type.replace('_', ' ').title()}"
+        # Add confidence if it's a classified action
+        confidence = event.get("confidence", None)
+        confidence_str = f" (confidence: {confidence:.0%})" if confidence else ""
+        
+        return f"Minute {minute}: {player} ({team}) - {event_type.replace('_', ' ').title()}{confidence_str}"
     
     def _format_metrics(self, metrics: Dict[str, Any]) -> List[str]:
         """Format metrics into indexable text chunks."""
