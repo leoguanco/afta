@@ -50,6 +50,7 @@
 | **Pitch Calibration**    | Homography, Keypoint Detection                  | [features/04_pitch_calibration/04_pitch_calibration_spec.md](features/04_pitch_calibration/04_pitch_calibration_spec.md)             |
 | **Tactical Metrics**     | Pitch Control, xT, PPDA, Physical Load          | [features/05_tactical_metrics/05_tactical_metrics_spec.md](features/05_tactical_metrics/05_tactical_metrics_spec.md)                 |
 | **Agentic Reasoning**    | RAG, CrewAI, LLM Analysis                       | [features/06_agentic_reasoning/06_agentic_reasoning_spec.md](features/06_agentic_reasoning/06_agentic_reasoning_spec.md)             |
+| **RAG Indexing**         | Vector Store, ChromaDB, Embeddings              | [features/06_agentic_reasoning/06c_rag_indexing_spec.md](features/06_agentic_reasoning/06c_rag_indexing_spec.md)                     |
 | **Phase Classification** | ML-based 4-phase game state detection           | [features/07_phase_classification/07_phase_classification_spec.md](features/07_phase_classification/07_phase_classification_spec.md) |
 | **Report Generation**    | PDF/JSON export with charts and LLM narrative   | [features/08_report_generation/08_report_generation_spec.md](features/08_report_generation/08_report_generation_spec.md)             |
 | **Pattern Detection**    | Unsupervised ML clustering of tactical patterns | [features/09_pattern_detection/09_pattern_detection_spec.md](features/09_pattern_detection/09_pattern_detection_spec.md)             |
