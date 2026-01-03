@@ -159,19 +159,28 @@ class MetricsCalculator:
             if frame_id % sample_rate != 0:
                 continue
             
+            # Separate players from ball
+            player_data = [d for d in frames_dict[frame_id] if d.get("object_type", "player") != "ball"]
+            ball_data = [d for d in frames_dict[frame_id] if d.get("object_type") == "ball"]
+            
             players = [
                 PlayerPosition(
                     player_id=d["player_id"],
-                    team_id=d["team_id"],
+                    team_id=d.get("team_id", "unknown"),
                     x=d["x"],
                     y=d["y"],
                     vx=d.get("vx", 0.0),
                     vy=d.get("vy", 0.0)
                 )
-                for d in frames_dict[frame_id]
+                for d in player_data
             ]
             
-            ball = BallPosition(x=52.5, y=34.0)
+            # Use actual ball position if available, otherwise center of pitch
+            if ball_data:
+                ball = BallPosition(x=ball_data[0]["x"], y=ball_data[0]["y"])
+            else:
+                ball = BallPosition(x=52.5, y=34.0)  # Default to center
+            
             match_frames.append(MatchFrame(frame_id, players, ball))
         
         return match_frames

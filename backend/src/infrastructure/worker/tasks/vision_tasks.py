@@ -75,6 +75,7 @@ def process_video_task(self, video_path: str, output_path: str) -> dict:
                 "player_id": traj.object_id,
                 "x": traj.x,
                 "y": traj.y,
+                "object_type": traj.object_type.value,  # "player" or "ball"
                 "confidence": getattr(traj, 'confidence', 1.0),
                 "timestamp": traj.frame_id * 0.04  # Assuming 25fps for timestamp derivation
             }

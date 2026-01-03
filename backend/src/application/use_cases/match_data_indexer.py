@@ -118,7 +118,8 @@ class MatchDataIndexer:
     def _format_metrics(self, metrics: Dict[str, Any]) -> List[str]:
         """Format metrics into indexable text chunks."""
         texts = []
-        # Logic kept identical to original
+        
+        # PPDA metrics
         if "home_ppda" in metrics or "away_ppda" in metrics:
             home = metrics.get("home_ppda", 0)
             away = metrics.get("away_ppda", 0)
@@ -133,5 +134,15 @@ class MatchDataIndexer:
             
         if "total_xt" in metrics:
             texts.append(f"Expected Threat: {metrics['total_xt']:.4f} xT.")
+        
+        # Processing summary metrics (from vision pipeline)
+        if "players_processed" in metrics:
+            players = metrics["players_processed"]
+            frames = metrics.get("frames_processed", 0)
+            events = metrics.get("events_processed", 0)
+            texts.append(
+                f"Match Analysis: {players} players tracked across {frames} frames. "
+                f"{events} events processed."
+            )
             
         return texts
