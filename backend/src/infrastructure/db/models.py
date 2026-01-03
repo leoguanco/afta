@@ -165,3 +165,24 @@ class PPDAStatsModel(Base):
     )
 
 
+class PlayerMappingModel(Base):
+    """
+    SQLAlchemy model for player-track ID mappings.
+    
+    Stores the mapping between tracking IDs and player info.
+    Note: match_id is NOT a FK to allow lineups before match creation.
+    """
+    __tablename__ = "player_mappings"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    match_id = Column(String, nullable=False, index=True)  # No FK - can exist independently
+    track_id = Column(Integer, nullable=False)  # Object ID from tracker
+    player_name = Column(String, nullable=False)
+    jersey_number = Column(Integer, nullable=True)
+    team = Column(String, nullable=False)  # 'home' or 'away'
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Composite unique constraint (one mapping per track per match)
+    __table_args__ = (
+        Index('ix_player_mapping_match_track', 'match_id', 'track_id', unique=True),
+    )
