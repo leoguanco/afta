@@ -86,3 +86,4 @@ frontend/.next
 
 
 backend/data
+backend/chroma_db
