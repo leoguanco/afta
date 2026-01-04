@@ -2,7 +2,7 @@
 PostgreSQL implementation of MatchRepository port.
 """
 
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.orm import Session
 
 from src.domain.entities.match import Match
@@ -141,6 +141,48 @@ class PostgresMatchRepo(MatchRepository):
         except Exception as e:
             session.rollback()
             raise e
+        finally:
+            if not self.session:
+                session.close()
+
+    def list_matches(self, limit: int = 20, offset: int = 0) -> List[Match]:
+        """
+        List all matches from the database.
+        
+        Args:
+            limit: Maximum number of matches to return.
+            offset: Number of matches to skip (for pagination).
+        
+        Returns:
+            List of Match domain entities.
+        """
+        session = self.session or SessionLocal()
+        try:
+            match_models = (
+                session.query(MatchModel)
+                .order_by(MatchModel.created_at.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+            
+            matches = []
+            for match_model in match_models:
+                # Get event count without loading all events
+                event_count = session.query(EventModel).filter_by(
+                    match_id=match_model.match_id
+                ).count()
+                
+                # Create lightweight Match object
+                match = Match(
+                    match_id=match_model.match_id,
+                    home_team_id=match_model.match_metadata.get("home_team_id", "Unknown") if match_model.match_metadata else "Unknown",
+                    away_team_id=match_model.match_metadata.get("away_team_id", "Unknown") if match_model.match_metadata else "Unknown",
+                    events=[None] * event_count  # Placeholder to get event count
+                )
+                matches.append(match)
+            
+            return matches
         finally:
             if not self.session:
                 session.close()

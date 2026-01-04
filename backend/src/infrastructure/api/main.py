@@ -41,6 +41,27 @@ from src.infrastructure.api.endpoints.lineup import router as lineup_router
 
 app = FastAPI(title="Football Intelligence Engine API", version="0.1.0")
 
+# =============================================================================
+# CORS Configuration - Allow frontend to connect
+# =============================================================================
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001", 
+        "http://localhost:3002",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Correlation-ID"],
+)
+
 
 @app.middleware("http")
 async def correlation_id_middleware(request: Request, call_next):

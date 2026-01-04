@@ -36,6 +36,8 @@ export interface Match {
   home_team_id: string;
   away_team_id: string;
   event_count: number;
+  date?: string;
+  score?: string;
 }
 
 export interface MatchMetrics {
@@ -87,6 +89,21 @@ export interface ChatMessage {
 // =============================================================================
 // Query Hooks
 // =============================================================================
+
+/**
+ * Fetch all matches
+ */
+export function useMatches(limit: number = 20, offset: number = 0) {
+  return useQuery({
+    queryKey: ["matches", limit, offset],
+    queryFn: async () => {
+      const { data } = await apiClient.get<Match[]>(`/matches`, {
+        params: { limit, offset },
+      });
+      return data;
+    },
+  });
+}
 
 /**
  * Fetch match details
@@ -237,8 +254,9 @@ export function useJobStatus(jobId: string | null) {
       return data;
     },
     enabled: !!jobId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Stop polling when completed or failed
+      const data = query.state.data;
       if (data?.status === "COMPLETED" || data?.status === "FAILED") {
         return false;
       }
