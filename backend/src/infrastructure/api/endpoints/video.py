@@ -5,7 +5,7 @@ Endpoints for video processing and calibration.
 """
 import logging
 from typing import Optional, Literal
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile, File, Form
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -105,6 +105,181 @@ async def calibrate_video(request: CalibrationRequest):
         "status": result.status,
         "message": result.message,
     }
+
+
+@router.post("/video/upload")
+async def upload_video(
+    file: UploadFile = File(...),
+    home_team: str = Form("Home"),
+    away_team: str = Form("Away"),
+    date: Optional[str] = Form(None),
+    competition: Optional[str] = Form(None),
+    mode: Literal["full_match", "highlights"] = Form("full_match"),
+    auto_process: bool = Form(True),
+):
+    """
+    Upload a video file for processing.
+    
+    Accepts video file upload via multipart form data.
+    Stores the file in MinIO and optionally triggers processing.
+    
+    Args:
+        file: The video file to upload
+        home_team: Name of the home team
+        away_team: Name of the away team  
+        date: Match date (optional)
+        competition: Competition name (optional)
+        auto_process: Whether to automatically start processing after upload
+    
+    Returns:
+        Upload result with file key and optional job_id
+    """
+    from fastapi.responses import JSONResponse
+    import uuid
+    
+    from src.infrastructure.storage.minio_adapter import MinIOAdapter
+    
+    # Validate file type
+    if not file.content_type or not file.content_type.startswith("video/"):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "detail": "Invalid file type",
+                "message": "Only video files are accepted",
+                "content_type": file.content_type
+            }
+        )
+    
+    # Generate unique ID for this upload
+    upload_id = str(uuid.uuid4())
+    file_extension = file.filename.split(".")[-1] if file.filename and "." in file.filename else "mp4"
+    file_key = f"uploads/{upload_id}.{file_extension}"
+    
+    try:
+        # Initialize MinIO client with videos bucket
+        storage = MinIOAdapter(bucket="videos")
+        
+        # Read file content
+        content = await file.read()
+        file_size = len(content)
+        
+        # Check file size (max 2GB)
+        max_size = 2 * 1024 * 1024 * 1024  # 2GB
+        if file_size > max_size:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "detail": "File too large",
+                    "message": f"Maximum file size is 2GB. Your file is {file_size / (1024*1024*1024):.2f}GB"
+                }
+            )
+        
+        # Store in MinIO
+        storage.put_object(file_key, content, content_type=file.content_type or "video/mp4")
+        
+        logger.info(f"Uploaded video to MinIO: {file_key} ({file_size} bytes)")
+        
+        result = {
+            "upload_id": upload_id,
+            "file_key": file_key,
+            "file_size": file_size,
+            "filename": file.filename,
+            "status": "uploaded",
+        }
+        
+        # Auto-process if requested
+        if auto_process:
+            from src.infrastructure.adapters.celery_video_dispatcher import CeleryVideoDispatcher
+            from src.infrastructure.db.repositories.postgres_match_repo import PostgresMatchRepo
+            from src.application.use_cases.video_processor import VideoProcessor
+            
+            dispatcher = CeleryVideoDispatcher()
+            match_repo = PostgresMatchRepo()
+            use_case = VideoProcessor(dispatcher, match_repo)
+            
+            # Get MinIO internal path for processing
+            # The worker needs the MinIO path format
+            video_path = f"minio://videos/{file_key}"
+            output_path = f"matches/{upload_id}"
+            
+            process_result = use_case.execute(
+                video_path=video_path,
+                output_path=output_path,
+                metadata={
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "date": date,
+                    "competition": competition,
+                },
+                sync_offset_seconds=0.0,
+                mode=mode
+            )
+            
+            result["job_id"] = process_result.job_id
+            result["status"] = "processing"
+            result["match_id"] = upload_id
+            
+            logger.info(f"Started processing job {process_result.job_id} for upload {upload_id}")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Video upload failed: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "Upload failed",
+                "message": str(e)
+            }
+        )
+
+
+@router.get("/video/job/{job_id}")
+async def get_video_job_status(job_id: str):
+    """
+    Get the status of a video processing job.
+    
+    Returns current status, progress, and result when complete.
+    """
+    from src.infrastructure.worker.celery_app import celery_app
+    
+    task_result = celery_app.AsyncResult(job_id)
+    
+    # Map Celery states to user-friendly statuses
+    status_map = {
+        'PENDING': 'queued',
+        'STARTED': 'processing', 
+        'PROGRESS': 'processing',
+        'SUCCESS': 'completed',
+        'FAILURE': 'failed',
+        'REVOKED': 'cancelled',
+    }
+    
+    status = status_map.get(task_result.state, task_result.state.lower())
+    
+    response = {
+        "job_id": job_id,
+        "status": status,
+        "state": task_result.state,
+    }
+    
+    # Add progress info if available
+    if task_result.state == 'PROGRESS' and task_result.info:
+        response["progress"] = task_result.info.get("progress", 0)
+        response["message"] = task_result.info.get("message", "Processing...")
+    elif task_result.state == 'SUCCESS':
+        result_data = task_result.result or {}
+        response["match_id"] = result_data.get("match_id")
+        response["message"] = result_data.get("message", "Processing complete")
+    elif task_result.state == 'FAILURE':
+        response["error"] = str(task_result.info)
+        response["message"] = "Processing failed"
+    elif task_result.state == 'PENDING':
+        response["message"] = "Waiting in queue..."
+    elif task_result.state == 'STARTED':
+        response["message"] = "Processing started..."
+    
+    return response
 
 
 @router.get("/video/{match_id}/stream")

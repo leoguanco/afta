@@ -1,10 +1,10 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useMatchStore } from "@/src/store";
-import { useMatch, useMatchPhases } from "@/src/api";
+import { useMatch } from "@/src/api";
 import {
   Card,
   CardHeader,
@@ -12,9 +12,19 @@ import {
   CardContent,
   Button,
   Skeleton,
+  Progress,
 } from "@/components/ui";
-import { ArrowLeft, Download, Settings, Share2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  Settings,
+  Share2,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import Link from "next/link";
+import { apiClient } from "@/src/api";
 
 // Dynamic imports with ssr:false to prevent hydration issues
 const VideoPlayer = dynamic(
@@ -73,6 +83,113 @@ const ChatInterface = dynamic(
   }
 );
 
+// Processing status banner component
+function ProcessingBanner({ matchId }: { matchId: string }) {
+  const [jobInfo, setJobInfo] = useState<{
+    jobId: string;
+    status: string;
+    progress?: number;
+    message?: string;
+  } | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    // Check localStorage for job info
+    const stored = localStorage.getItem(`processing-job-${matchId}`);
+    if (!stored) return;
+
+    try {
+      const { jobId, startedAt } = JSON.parse(stored);
+
+      // Ignore jobs older than 1 hour
+      if (Date.now() - startedAt > 3600000) {
+        localStorage.removeItem(`processing-job-${matchId}`);
+        return;
+      }
+
+      // Poll for status
+      const pollStatus = async () => {
+        try {
+          const { data } = await apiClient.get(`/video/job/${jobId}`);
+          setJobInfo({
+            jobId,
+            status: data.status,
+            progress: data.progress,
+            message: data.message,
+          });
+
+          // Clear localStorage when complete or failed
+          if (data.status === "completed" || data.status === "failed") {
+            localStorage.removeItem(`processing-job-${matchId}`);
+          }
+        } catch (error) {
+          console.error("Failed to fetch job status:", error);
+        }
+      };
+
+      pollStatus();
+      const interval = setInterval(pollStatus, 3000);
+
+      return () => clearInterval(interval);
+    } catch (e) {
+      console.error("Failed to parse job info:", e);
+    }
+  }, [matchId]);
+
+  if (!jobInfo || dismissed) return null;
+
+  const isComplete = jobInfo.status === "completed";
+  const isFailed = jobInfo.status === "failed";
+  const isProcessing =
+    jobInfo.status === "processing" || jobInfo.status === "queued";
+
+  return (
+    <div
+      className={`border-b px-4 py-3 ${
+        isComplete
+          ? "bg-green-500/10 border-green-500/30"
+          : isFailed
+          ? "bg-destructive/10 border-destructive/30"
+          : "bg-primary/10 border-primary/30"
+      }`}
+    >
+      <div className="container mx-auto flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 flex-1">
+          {isComplete ? (
+            <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+          ) : isFailed ? (
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+          ) : (
+            <Loader2 className="h-5 w-5 text-primary animate-spin flex-shrink-0" />
+          )}
+          <div className="flex-1">
+            <p className="text-sm font-medium">
+              {isComplete
+                ? "Video Processing Complete!"
+                : isFailed
+                ? "Processing Failed"
+                : "Processing Video..."}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {jobInfo.message || "Please wait while we analyze the video"}
+            </p>
+          </div>
+          {isProcessing && jobInfo.progress !== undefined && (
+            <div className="w-32">
+              <Progress value={jobInfo.progress} className="h-2" />
+            </div>
+          )}
+        </div>
+        {(isComplete || isFailed) && (
+          <Button variant="ghost" size="sm" onClick={() => setDismissed(true)}>
+            Dismiss
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function MatchDetailPage() {
   const params = useParams();
   const matchId = params.id as string;
@@ -102,6 +219,9 @@ export default function MatchDetailPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Processing Status Banner */}
+      <ProcessingBanner matchId={matchId} />
+
       {/* Header */}
       <header className="border-b border-border/50 glass sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">

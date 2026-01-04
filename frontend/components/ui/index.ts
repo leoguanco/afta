@@ -45,3 +45,5 @@ export {
 export { Slider } from "./slider";
 export { Separator } from "./separator";
 export { Badge, badgeVariants } from "./badge";
+export { Label } from "./label";
+export { Progress } from "./progress";

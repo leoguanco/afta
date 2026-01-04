@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardHeader,
@@ -21,6 +23,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useMatches, Match } from "@/src/api";
+import { VideoUploadModal } from "@/components/video-upload/VideoUploadModal";
 
 interface MatchCardProps {
   match: Match;
@@ -116,12 +119,22 @@ function ErrorState({
 }
 
 export default function Home() {
+  const router = useRouter();
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+
   // Fetch matches from API
   const { data: matches, isLoading, isError, error, refetch } = useMatches();
 
   // Calculate stats
   const totalPlayers = (matches?.length || 0) * 22;
   const totalEvents = matches?.reduce((acc, m) => acc + m.event_count, 0) || 0;
+
+  // Handle upload complete - navigate to match page
+  const handleUploadComplete = (result: { matchId: string; jobId: string }) => {
+    // Refresh matches list and optionally navigate
+    refetch();
+    router.push(`/matches/${result.matchId}`);
+  };
 
   return (
     <main className="min-h-screen bg-background">
@@ -139,7 +152,7 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setUploadModalOpen(true)}>
             <Plus className="h-4 w-4" />
             Process Video
           </Button>
@@ -228,6 +241,13 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Video Upload Modal */}
+      <VideoUploadModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
+        onUploadComplete={handleUploadComplete}
+      />
     </main>
   );
 }

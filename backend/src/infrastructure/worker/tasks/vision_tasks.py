@@ -47,14 +47,52 @@ def process_video_task(
     try:
         logger.info(f"Starting video processing: {video_path} (mode: {mode})")
 
+        # Handle MinIO URIs - download to temp file first
+        actual_video_path = video_path
+        temp_file = None
+        
+        if video_path.startswith("minio://"):
+            import tempfile
+            import os
+            
+            # Parse minio://bucket/key format
+            minio_path = video_path.replace("minio://", "")
+            parts = minio_path.split("/", 1)
+            if len(parts) != 2:
+                return {"status": "error", "message": f"Invalid MinIO path: {video_path}"}
+            
+            bucket, key = parts
+            logger.info(f"Downloading video from MinIO: bucket={bucket}, key={key}")
+            
+            try:
+                storage = MinIOAdapter(bucket=bucket)
+                
+                # Create temp file with same extension
+                ext = os.path.splitext(key)[1] or ".mp4"
+                temp_file = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+                temp_file_path = temp_file.name
+                temp_file.close()
+                
+                # Download video from MinIO
+                storage.client.fget_object(bucket, key, temp_file_path)
+                actual_video_path = temp_file_path
+                logger.info(f"Downloaded video to temp file: {temp_file_path}")
+                
+            except Exception as download_err:
+                logger.error(f"Failed to download video from MinIO: {download_err}")
+                return {"status": "error", "message": f"Cannot download video from MinIO: {download_err}"}
+
         # Initialize detector and tracker
         detector = YOLODetector(confidence_threshold=0.5)
         tracker = ByteTrackerAdapter()
 
-        # Open video
-        cap = cv2.VideoCapture(video_path)
+        # Open video using actual path (temp file if downloaded from MinIO)
+        cap = cv2.VideoCapture(actual_video_path)
         if not cap.isOpened():
-            return {"status": "error", "message": f"Cannot open video: {video_path}"}
+            if temp_file:
+                import os
+                os.unlink(actual_video_path)
+            return {"status": "error", "message": f"Cannot open video: {actual_video_path}"}
 
         all_trajectories: List[Trajectory] = []
         frame_id = 0
@@ -77,6 +115,15 @@ def process_video_task(
                 logger.info(f"Processed {frame_id} frames, {len(all_trajectories)} trajectories")
 
         cap.release()
+        
+        # Clean up temp file if we created one
+        if temp_file:
+            import os
+            try:
+                os.unlink(actual_video_path)
+                logger.info(f"Cleaned up temp file: {actual_video_path}")
+            except Exception as cleanup_err:
+                logger.warning(f"Failed to clean up temp file: {cleanup_err}")
 
         # =====================================================
         # STABILIZATION: Smooth and Clean Trajectories
