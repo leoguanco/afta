@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import { Button, Input, ScrollArea } from "@/components/ui";
 import { Send, Loader2, Bot, User, AlertCircle } from "lucide-react";
 import { cn } from "@/src/utils";
@@ -34,17 +35,32 @@ function formatTime(timestamp: number): string {
   });
 }
 
+// Strip markdown code fences that wrap entire content
+// Some AI models return responses wrapped in ```markdown ... ``` which prevents proper rendering
+function stripCodeFences(content: string): string {
+  // Match content wrapped in code fences like ```markdown\n...\n``` or just ```\n...\n```
+  const codeFencePattern = /^```(?:markdown|md)?\s*\n?([\s\S]*?)\n?```$/;
+  const match = content.trim().match(codeFencePattern);
+  return match ? match[1].trim() : content;
+}
+
 export function ChatInterface({ matchId, className }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Local storage key for this match
   const storageKey = `chat-${matchId}`;
+
+  // Set mounted state on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Load messages from localStorage
   useEffect(() => {
@@ -309,9 +325,93 @@ export function ChatInterface({ matchId, className }: ChatInterfaceProps) {
                       : "bg-muted"
                   )}
                 >
-                  <p className="text-sm whitespace-pre-wrap">
-                    {message.content}
-                  </p>
+                  {message.role === "assistant" ? (
+                    <div className="text-sm space-y-2">
+                      <ReactMarkdown
+                        components={{
+                          h1: ({ children }) => (
+                            <h1 className="text-lg font-bold mt-3 mb-2">
+                              {children}
+                            </h1>
+                          ),
+                          h2: ({ children }) => (
+                            <h2 className="text-base font-semibold mt-2 mb-1">
+                              {children}
+                            </h2>
+                          ),
+                          h3: ({ children }) => (
+                            <h3 className="text-sm font-medium mt-2 mb-1">
+                              {children}
+                            </h3>
+                          ),
+                          p: ({ children }) => (
+                            <p className="text-sm mb-2 last:mb-0">{children}</p>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="list-disc list-inside text-sm mb-2 space-y-1">
+                              {children}
+                            </ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal list-inside text-sm mb-2 space-y-1">
+                              {children}
+                            </ol>
+                          ),
+                          li: ({ children }) => (
+                            <li className="text-sm">{children}</li>
+                          ),
+                          pre: ({ children }) => (
+                            <pre className="bg-black/40 p-3 rounded-md my-2 overflow-x-auto text-xs">
+                              {children}
+                            </pre>
+                          ),
+                          code: ({ children, className, ...props }) => {
+                            // If wrapped in pre (has className with language), it's a code block
+                            // Otherwise it's inline code
+                            const isCodeBlock =
+                              className?.includes("language-");
+                            if (isCodeBlock) {
+                              return (
+                                <code className="font-mono">{children}</code>
+                              );
+                            }
+                            // Inline code
+                            return (
+                              <code className="bg-black/30 px-1.5 py-0.5 rounded text-xs font-mono">
+                                {children}
+                              </code>
+                            );
+                          },
+                          strong: ({ children }) => (
+                            <strong className="font-semibold">
+                              {children}
+                            </strong>
+                          ),
+                          table: ({ children }) => (
+                            <table className="text-xs border-collapse my-2 w-full">
+                              {children}
+                            </table>
+                          ),
+                          th: ({ children }) => (
+                            <th className="border border-border/50 px-2 py-1 bg-muted/50 text-left">
+                              {children}
+                            </th>
+                          ),
+                          td: ({ children }) => (
+                            <td className="border border-border/50 px-2 py-1">
+                              {children}
+                            </td>
+                          ),
+                        }}
+                      >
+                        {stripCodeFences(message.content)}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">
+                      {message.content}
+                    </p>
+                  )}
                   <span className="text-xs opacity-60 mt-1 block">
                     {formatTime(message.timestamp)}
                   </span>

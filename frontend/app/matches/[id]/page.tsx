@@ -1,9 +1,10 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useMatchStore } from "@/src/store";
-import { useMatch, useMatchPhases, useMatchMetrics } from "@/src/api";
+import { useMatch, useMatchPhases } from "@/src/api";
 import {
   Card,
   CardHeader,
@@ -12,29 +13,92 @@ import {
   Button,
   Skeleton,
 } from "@/components/ui";
-import { VideoPlayer } from "@/components/video-player/VideoPlayer";
-import { TacticalBoard } from "@/components/pitch-view/TacticalBoard";
-import { MetricsPanel } from "@/components/metrics/MetricsPanel";
-import { ChatInterface } from "@/components/chat/ChatInterface";
 import { ArrowLeft, Download, Settings, Share2 } from "lucide-react";
 import Link from "next/link";
+
+// Dynamic imports with ssr:false to prevent hydration issues
+const VideoPlayer = dynamic(
+  () =>
+    import("@/components/video-player/VideoPlayer").then(
+      (mod) => mod.VideoPlayer
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full flex items-center justify-center">
+        <Skeleton className="h-full w-full" />
+      </div>
+    ),
+  }
+);
+
+const TacticalBoard = dynamic(
+  () =>
+    import("@/components/pitch-view/TacticalBoard").then(
+      (mod) => mod.TacticalBoard
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full flex items-center justify-center">
+        <Skeleton className="h-full w-full" />
+      </div>
+    ),
+  }
+);
+
+const MetricsPanel = dynamic(
+  () =>
+    import("@/components/metrics/MetricsPanel").then((mod) => mod.MetricsPanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full flex items-center justify-center">
+        <Skeleton className="h-full w-full" />
+      </div>
+    ),
+  }
+);
+
+const ChatInterface = dynamic(
+  () =>
+    import("@/components/chat/ChatInterface").then((mod) => mod.ChatInterface),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full flex items-center justify-center">
+        <Skeleton className="h-full w-full" />
+      </div>
+    ),
+  }
+);
 
 export default function MatchDetailPage() {
   const params = useParams();
   const matchId = params.id as string;
+  const [mounted, setMounted] = useState(false);
 
   // Global state
   const { setMatchId, reset } = useMatchStore();
 
-  // Set match context on mount
+  // Set mounted and match context on mount
   useEffect(() => {
+    setMounted(true);
     setMatchId(matchId);
     return () => reset();
   }, [matchId, setMatchId, reset]);
 
   // Fetch match data
   const { data: match, isLoading: matchLoading } = useMatch(matchId);
-  const { data: phases } = useMatchPhases(matchId);
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Skeleton className="h-12 w-48" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

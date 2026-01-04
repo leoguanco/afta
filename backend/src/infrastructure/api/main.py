@@ -47,19 +47,12 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(title="Football Intelligence Engine API", version="0.1.0")
 
 # CORS must be added immediately after app creation, before other middlewares
+# Note: For development, we allow all origins. For production, restrict this.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001", 
-        "http://localhost:3002",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "http://127.0.0.1:3002",
-        "*",  # Allow all origins for development
-    ],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_origins=["*"],  # Allow all origins for development
+    allow_credentials=False,  # Must be False when using wildcard origin
+    allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Correlation-ID"],
 )
