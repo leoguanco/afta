@@ -3,9 +3,12 @@ Video API Endpoints - Infrastructure Layer
 
 Endpoints for video processing and calibration.
 """
+import logging
 from typing import Optional, Literal
 from fastapi import APIRouter
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["video"])
 
@@ -102,3 +105,77 @@ async def calibrate_video(request: CalibrationRequest):
         "status": result.status,
         "message": result.message,
     }
+
+
+@router.get("/video/{match_id}/stream")
+async def stream_video(match_id: str):
+    """
+    Stream the processed video file for a match.
+    
+    Returns the video file from MinIO storage.
+    The video is stored after processing via /process-video endpoint.
+    """
+    from fastapi import Request, HTTPException
+    from fastapi.responses import StreamingResponse, JSONResponse
+    from minio.error import S3Error
+    import io
+    
+    from src.infrastructure.storage.minio_adapter import MinIOAdapter
+    
+    try:
+        # Initialize MinIO client with video bucket
+        storage = MinIOAdapter(bucket="videos")
+        
+        # Video is stored at matches/{match_id}/output.mp4 after processing
+        video_key = f"matches/{match_id}/output.mp4"
+        
+        try:
+            # Check if object exists by trying to stat it
+            stat = storage.client.stat_object(storage.bucket, video_key)
+            content_length = stat.size
+            content_type = stat.content_type or "video/mp4"
+            
+        except S3Error as e:
+            if e.code == "NoSuchKey" or e.code == "NoSuchBucket":
+                return JSONResponse(
+                    status_code=404,
+                    content={
+                        "detail": "Video not found",
+                        "message": f"No processed video exists for match '{match_id}'.",
+                        "match_id": match_id,
+                        "hint": "Process a video first using POST /api/v1/process-video"
+                    }
+                )
+            raise
+        
+        # Stream the video file
+        def generate():
+            try:
+                response = storage.client.get_object(storage.bucket, video_key)
+                for chunk in response.stream(32 * 1024):  # 32KB chunks
+                    yield chunk
+                response.close()
+                response.release_conn()
+            except Exception as e:
+                logger.error(f"Error streaming video: {e}")
+        
+        return StreamingResponse(
+            generate(),
+            media_type=content_type,
+            headers={
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(content_length),
+                "Content-Disposition": f'inline; filename="{match_id}.mp4"',
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Video streaming error for {match_id}: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "Video streaming error",
+                "message": str(e),
+                "match_id": match_id
+            }
+        )

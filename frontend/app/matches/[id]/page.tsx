@@ -94,7 +94,7 @@ export default function MatchDetailPage() {
             </CardHeader>
             <CardContent className="p-0 h-[calc(100%-52px)]">
               <VideoPlayer
-                videoUrl="/api/v1/matches/test/video"
+                videoUrl={`http://localhost:8000/api/v1/video/${matchId}/stream`}
                 matchId={matchId}
               />
             </CardContent>

@@ -10,36 +10,17 @@ import {
   Button,
   Skeleton,
 } from "@/components/ui";
-import { Activity, Video, Users, ChevronRight, Plus, Zap } from "lucide-react";
+import {
+  Activity,
+  Video,
+  Users,
+  ChevronRight,
+  Plus,
+  Zap,
+  AlertCircle,
+  RefreshCw,
+} from "lucide-react";
 import { useMatches, Match } from "@/src/api";
-
-// Demo matches as fallback when API is not available
-const DEMO_MATCHES: Match[] = [
-  {
-    match_id: "match-001",
-    home_team_id: "Boca Juniors",
-    away_team_id: "River Plate",
-    event_count: 1247,
-    date: "2025-12-28",
-    score: "2 - 1",
-  },
-  {
-    match_id: "match-002",
-    home_team_id: "Barcelona",
-    away_team_id: "Real Madrid",
-    event_count: 982,
-    date: "2025-12-20",
-    score: "3 - 2",
-  },
-  {
-    match_id: "match-003",
-    home_team_id: "Manchester City",
-    away_team_id: "Liverpool",
-    event_count: 1105,
-    date: "2025-12-15",
-    score: "1 - 1",
-  },
-];
 
 interface MatchCardProps {
   match: Match;
@@ -93,18 +74,54 @@ function MatchCardSkeleton() {
   );
 }
 
-export default function Home() {
-  // Fetch matches from API, falls back to demo data on error
-  const { data: apiMatches, isLoading, isError } = useMatches();
+function EmptyState({ onRefresh }: { onRefresh: () => void }) {
+  return (
+    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+      <Video className="h-16 w-16 text-muted-foreground mb-4" />
+      <h3 className="text-xl font-medium mb-2">No Matches Found</h3>
+      <p className="text-muted-foreground mb-6 max-w-md">
+        No matches have been processed yet. Use the "Process Video" button to
+        analyze a football match video.
+      </p>
+      <Button variant="outline" onClick={onRefresh}>
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Refresh
+      </Button>
+    </div>
+  );
+}
 
-  // Use API data if available, otherwise use demo data
-  const matches =
-    apiMatches && apiMatches.length > 0 ? apiMatches : DEMO_MATCHES;
-  const showingDemoData = !apiMatches || apiMatches.length === 0;
+function ErrorState({
+  error,
+  onRetry,
+}: {
+  error: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+      <AlertCircle className="h-16 w-16 text-destructive mb-4" />
+      <h3 className="text-xl font-medium mb-2">Connection Error</h3>
+      <p className="text-muted-foreground mb-2 max-w-md">
+        Unable to connect to the backend API. Make sure the server is running on
+        port 8000.
+      </p>
+      <p className="text-xs text-muted-foreground mb-6 font-mono">{error}</p>
+      <Button variant="outline" onClick={onRetry}>
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Retry
+      </Button>
+    </div>
+  );
+}
+
+export default function Home() {
+  // Fetch matches from API
+  const { data: matches, isLoading, isError, error, refetch } = useMatches();
 
   // Calculate stats
-  const totalPlayers = matches.length * 22; // Approximate
-  const totalEvents = matches.reduce((acc, m) => acc + m.event_count, 0);
+  const totalPlayers = (matches?.length || 0) * 22;
+  const totalEvents = matches?.reduce((acc, m) => acc + m.event_count, 0) || 0;
 
   return (
     <main className="min-h-screen bg-background">
@@ -131,14 +148,6 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Demo data notice */}
-        {showingDemoData && !isLoading && (
-          <div className="mb-6 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-200 text-sm">
-            <strong>Demo Mode:</strong> Showing sample data. Start the backend
-            API on port 8000 to see real matches.
-          </div>
-        )}
-
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="glass">
@@ -148,7 +157,7 @@ export default function Home() {
                   <Video className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{matches.length}</p>
+                  <p className="text-2xl font-bold">{matches?.length || 0}</p>
                   <p className="text-sm text-muted-foreground">
                     Matches Analyzed
                   </p>
@@ -205,10 +214,17 @@ export default function Home() {
               <MatchCardSkeleton />
               <MatchCardSkeleton />
             </>
-          ) : (
+          ) : isError ? (
+            <ErrorState
+              error={(error as Error)?.message || "Unknown error"}
+              onRetry={() => refetch()}
+            />
+          ) : matches && matches.length > 0 ? (
             matches.map((match) => (
               <MatchCard key={match.match_id} match={match} />
             ))
+          ) : (
+            <EmptyState onRefresh={() => refetch()} />
           )}
         </div>
       </div>

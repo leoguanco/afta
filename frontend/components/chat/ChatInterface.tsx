@@ -2,14 +2,16 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Button, Input, ScrollArea } from "@/components/ui";
-import { Send, Loader2, Bot, User } from "lucide-react";
+import { Send, Loader2, Bot, User, AlertCircle } from "lucide-react";
 import { cn } from "@/src/utils";
+import { apiClient } from "@/src/api";
 
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: number;
+  isError?: boolean;
 }
 
 interface ChatInterfaceProps {
@@ -17,12 +19,12 @@ interface ChatInterfaceProps {
   className?: string;
 }
 
-// Example suggestions
+// Suggestion prompts for the user
 const SUGGESTIONS = [
-  "What was our pressing intensity?",
+  "Analyze the pressing intensity",
   "Who covered the most distance?",
-  "Analyze the first-half performance",
-  "How did our defensive shape hold?",
+  "How did the first half compare to second?",
+  "What were the key tactical patterns?",
 ];
 
 function formatTime(timestamp: number): string {
@@ -36,8 +38,10 @@ export function ChatInterface({ matchId, className }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Local storage key for this match
   const storageKey = `chat-${matchId}`;
@@ -66,11 +70,21 @@ export function ChatInterface({ matchId, className }: ChatInterfaceProps) {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isThinking]);
 
-  // Send message
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
+  // Send message to backend
   const handleSend = useCallback(
     async (text?: string) => {
       const messageText = text || input.trim();
       if (!messageText || isThinking) return;
+
+      // Reset error state
+      setConnectionError(null);
 
       // Add user message
       const userMessage: ChatMessage = {
@@ -83,73 +97,135 @@ export function ChatInterface({ matchId, className }: ChatInterfaceProps) {
       setInput("");
       setIsThinking(true);
 
+      // Create abort controller for this request
+      abortControllerRef.current = new AbortController();
+
       try {
         // Call the SSE endpoint
-        const response = await fetch("/api/v1/chat/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ match_id: matchId, query: messageText }),
-        });
+        const response = await fetch(
+          `${apiClient.defaults.baseURL}/chat/analyze`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Correlation-ID": crypto.randomUUID().slice(0, 8),
+            },
+            body: JSON.stringify({
+              match_id: matchId,
+              query: messageText,
+            }),
+            signal: abortControllerRef.current.signal,
+          }
+        );
 
         if (!response.ok) {
-          throw new Error("Analysis request failed");
+          throw new Error(
+            `Analysis request failed: ${response.status} ${response.statusText}`
+          );
         }
 
-        // Read SSE stream
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        let aiContent = "";
+        // Check if it's a streaming response
+        const contentType = response.headers.get("content-type");
 
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+        if (contentType?.includes("text/event-stream")) {
+          // Handle SSE stream
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+          let aiContent = "";
 
-            const text = decoder.decode(value);
-            const lines = text
-              .split("\n")
-              .filter((l) => l.startsWith("data: "));
+          if (reader) {
+            try {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
-            for (const line of lines) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.type === "result" || data.type === "content") {
-                  aiContent += data.content || "";
-                } else if (data.type === "error") {
-                  throw new Error(data.content);
+                const text = decoder.decode(value, { stream: true });
+                const lines = text.split("\n");
+
+                for (const line of lines) {
+                  if (line.startsWith("data: ")) {
+                    try {
+                      const data = JSON.parse(line.slice(6));
+
+                      if (data.type === "content" || data.type === "result") {
+                        aiContent += data.content || data.text || "";
+                      } else if (data.type === "thinking") {
+                        // Update thinking status
+                      } else if (data.type === "error") {
+                        throw new Error(data.content || "Stream error");
+                      } else if (data.type === "done") {
+                        break;
+                      }
+                    } catch (parseError) {
+                      // Skip malformed JSON
+                    }
+                  }
                 }
-              } catch (parseError) {
-                // Skip malformed events
               }
+            } finally {
+              reader.releaseLock();
             }
           }
+
+          // Add AI response
+          if (aiContent) {
+            const aiMessage: ChatMessage = {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: aiContent,
+              timestamp: Date.now(),
+            };
+            setMessages((prev) => [...prev, aiMessage]);
+          }
+        } else {
+          // Handle regular JSON response
+          const data = await response.json();
+
+          const aiMessage: ChatMessage = {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content:
+              data.result ||
+              data.message ||
+              data.content ||
+              "Analysis complete. Please provide more specific questions about the match.",
+            timestamp: Date.now(),
+          };
+          setMessages((prev) => [...prev, aiMessage]);
+        }
+      } catch (error) {
+        if ((error as Error).name === "AbortError") {
+          // Request was cancelled
+          return;
         }
 
-        // Add AI response
-        const aiMessage: ChatMessage = {
+        console.error("Chat error:", error);
+
+        // Add error message
+        const errorMessage: ChatMessage = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content:
-            aiContent ||
-            "I've analyzed the match data. How can I help you further?",
+          content: `Unable to connect to the analysis service. Error: ${
+            (error as Error).message
+          }`,
           timestamp: Date.now(),
+          isError: true,
         };
-        setMessages((prev) => [...prev, aiMessage]);
-      } catch (error) {
-        // Fallback response for demo
-        const aiMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: `Based on my analysis of this match:\n\n**Key Observations:**\n• The team maintained strong pressing intensity with a PPDA of 9.2\n• Highest distance covered: Player 8 (12.1 km)\n• Pitch control favored the home team at 54%\n• 23 transitions were detected, with 15 successful counter-attacks\n\nWould you like me to elaborate on any specific aspect?`,
-          timestamp: Date.now(),
-        };
-        setMessages((prev) => [...prev, aiMessage]);
+        setMessages((prev) => [...prev, errorMessage]);
+        setConnectionError("Backend service may be unavailable");
       } finally {
         setIsThinking(false);
+        abortControllerRef.current = null;
       }
     },
     [input, isThinking, matchId]
   );
+
+  // Cancel current request
+  const handleCancel = useCallback(() => {
+    abortControllerRef.current?.abort();
+    setIsThinking(false);
+  }, []);
 
   // Handle Enter key
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -159,8 +235,23 @@ export function ChatInterface({ matchId, className }: ChatInterfaceProps) {
     }
   };
 
+  // Clear chat history
+  const handleClear = () => {
+    setMessages([]);
+    localStorage.removeItem(storageKey);
+    setConnectionError(null);
+  };
+
   return (
     <div className={cn("flex flex-col h-full", className)}>
+      {/* Connection error banner */}
+      {connectionError && (
+        <div className="bg-destructive/10 border-b border-destructive/30 px-4 py-2 text-sm text-destructive flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          {connectionError}
+        </div>
+      )}
+
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         {messages.length === 0 ? (
@@ -195,8 +286,17 @@ export function ChatInterface({ matchId, className }: ChatInterfaceProps) {
                 )}
               >
                 {message.role === "assistant" && (
-                  <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                    <Bot className="h-4 w-4 text-primary" />
+                  <div
+                    className={cn(
+                      "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
+                      message.isError ? "bg-destructive/20" : "bg-primary/20"
+                    )}
+                  >
+                    {message.isError ? (
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                    ) : (
+                      <Bot className="h-4 w-4 text-primary" />
+                    )}
                   </div>
                 )}
                 <div
@@ -204,6 +304,8 @@ export function ChatInterface({ matchId, className }: ChatInterfaceProps) {
                     "max-w-[80%] rounded-lg px-4 py-2",
                     message.role === "user"
                       ? "bg-primary text-primary-foreground"
+                      : message.isError
+                      ? "bg-destructive/10 border border-destructive/30"
                       : "bg-muted"
                   )}
                 >
@@ -230,7 +332,15 @@ export function ChatInterface({ matchId, className }: ChatInterfaceProps) {
                 </div>
                 <div className="bg-muted rounded-lg px-4 py-2 flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">Analyzing...</span>
+                  <span className="text-sm">Analyzing match data...</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancel}
+                    className="h-6 px-2 text-xs"
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
             )}
@@ -266,6 +376,14 @@ export function ChatInterface({ matchId, className }: ChatInterfaceProps) {
             <Send className="h-4 w-4" />
           </Button>
         </form>
+        {messages.length > 0 && (
+          <button
+            onClick={handleClear}
+            className="text-xs text-muted-foreground hover:text-foreground mt-2"
+          >
+            Clear history
+          </button>
+        )}
       </div>
     </div>
   );

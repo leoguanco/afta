@@ -39,13 +39,14 @@ from src.infrastructure.api.endpoints.matches import router as matches_router
 from src.infrastructure.api.endpoints.indexing import router as indexing_router
 from src.infrastructure.api.endpoints.lineup import router as lineup_router
 
-app = FastAPI(title="Football Intelligence Engine API", version="0.1.0")
-
 # =============================================================================
 # CORS Configuration - Allow frontend to connect
 # =============================================================================
 from fastapi.middleware.cors import CORSMiddleware
 
+app = FastAPI(title="Football Intelligence Engine API", version="0.1.0")
+
+# CORS must be added immediately after app creation, before other middlewares
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -55,9 +56,10 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
         "http://127.0.0.1:3002",
+        "*",  # Allow all origins for development
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["X-Correlation-ID"],
 )

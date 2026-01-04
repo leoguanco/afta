@@ -2,52 +2,15 @@
 
 import { useMemo } from "react";
 import { useMatchStore } from "@/src/store";
-import { Button } from "@/components/ui";
-import { Users, Flame, Grid3X3, Eye, EyeOff } from "lucide-react";
-import { cn, TEAM_COLORS, pitchToSvg, PITCH_DIMENSIONS } from "@/src/utils";
-
-interface Player {
-  player_id: string;
-  x: number;
-  y: number;
-  team: "home" | "away";
-  jersey_number?: number;
-}
+import { useTrackingData } from "@/src/api";
+import { Button, Skeleton } from "@/components/ui";
+import { Users, Flame, Grid3X3, RefreshCw } from "lucide-react";
+import { cn } from "@/src/utils";
 
 interface TacticalBoardProps {
   matchId: string;
   className?: string;
 }
-
-// Demo player positions - replace with real tracking data
-const DEMO_PLAYERS: Player[] = [
-  // Home Team (in attack)
-  { player_id: "h1", x: 10, y: 34, team: "home", jersey_number: 1 },
-  { player_id: "h2", x: 25, y: 10, team: "home", jersey_number: 2 },
-  { player_id: "h3", x: 25, y: 25, team: "home", jersey_number: 4 },
-  { player_id: "h4", x: 25, y: 43, team: "home", jersey_number: 5 },
-  { player_id: "h5", x: 25, y: 58, team: "home", jersey_number: 3 },
-  { player_id: "h6", x: 45, y: 17, team: "home", jersey_number: 6 },
-  { player_id: "h7", x: 50, y: 34, team: "home", jersey_number: 8 },
-  { player_id: "h8", x: 45, y: 51, team: "home", jersey_number: 10 },
-  { player_id: "h9", x: 70, y: 20, team: "home", jersey_number: 7 },
-  { player_id: "h10", x: 75, y: 34, team: "home", jersey_number: 9 },
-  { player_id: "h11", x: 70, y: 48, team: "home", jersey_number: 11 },
-  // Away Team (in defense)
-  { player_id: "a1", x: 95, y: 34, team: "away", jersey_number: 1 },
-  { player_id: "a2", x: 80, y: 15, team: "away", jersey_number: 2 },
-  { player_id: "a3", x: 82, y: 28, team: "away", jersey_number: 4 },
-  { player_id: "a4", x: 82, y: 40, team: "away", jersey_number: 5 },
-  { player_id: "a5", x: 80, y: 53, team: "away", jersey_number: 3 },
-  { player_id: "a6", x: 65, y: 20, team: "away", jersey_number: 6 },
-  { player_id: "a7", x: 60, y: 34, team: "away", jersey_number: 8 },
-  { player_id: "a8", x: 65, y: 48, team: "away", jersey_number: 10 },
-  { player_id: "a9", x: 55, y: 25, team: "away", jersey_number: 7 },
-  { player_id: "a10", x: 50, y: 50, team: "away", jersey_number: 9 },
-  { player_id: "a11", x: 58, y: 58, team: "away", jersey_number: 11 },
-];
-
-const BALL_POSITION = { x: 72, y: 32 };
 
 export function TacticalBoard({ matchId, className }: TacticalBoardProps) {
   const {
@@ -60,9 +23,75 @@ export function TacticalBoard({ matchId, className }: TacticalBoardProps) {
     currentFrame,
   } = useMatchStore();
 
-  // Use demo data for now - in production, fetch from API based on currentFrame
-  const players = useMemo(() => DEMO_PLAYERS, []);
-  const ball = useMemo(() => BALL_POSITION, []);
+  // Fetch real tracking data from API
+  const {
+    data: trackingData,
+    isLoading,
+    isError,
+    refetch,
+  } = useTrackingData(matchId, currentFrame, currentFrame + 1);
+
+  // Get current frame data
+  const frameData = useMemo(() => {
+    if (!trackingData || trackingData.length === 0) return null;
+    return trackingData[0];
+  }, [trackingData]);
+
+  // Extract players and ball from frame data
+  const players = useMemo(() => {
+    if (!frameData?.players) return [];
+    return frameData.players.map((p) => ({
+      player_id: p.player_id,
+      x: p.x,
+      y: p.y,
+      team: p.team,
+      jersey_number: p.jersey_number,
+    }));
+  }, [frameData]);
+
+  const ball = useMemo(() => {
+    return frameData?.ball || null;
+  }, [frameData]);
+
+  // Show loading state
+  if (isLoading && !frameData) {
+    return (
+      <div
+        className={cn(
+          "relative h-full flex items-center justify-center",
+          className
+        )}
+      >
+        <div className="text-center">
+          <Skeleton className="h-full w-full absolute inset-0" />
+          <p className="text-muted-foreground">Loading tracking data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error/no data state
+  if (isError || !frameData) {
+    return (
+      <div
+        className={cn(
+          "relative h-full flex flex-col items-center justify-center",
+          className
+        )}
+      >
+        <p className="text-muted-foreground mb-4">
+          No tracking data available for this frame
+        </p>
+        <p className="text-xs text-muted-foreground mb-4">
+          Run video processing to generate tracking data
+        </p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("relative h-full flex flex-col", className)}>
@@ -73,6 +102,7 @@ export function TacticalBoard({ matchId, className }: TacticalBoardProps) {
           size="sm"
           className="h-8 px-2"
           onClick={togglePlayerDots}
+          title="Toggle Players"
         >
           <Users className="h-4 w-4" />
         </Button>
@@ -81,6 +111,7 @@ export function TacticalBoard({ matchId, className }: TacticalBoardProps) {
           size="sm"
           className="h-8 px-2"
           onClick={toggleHeatmap}
+          title="Toggle Heatmap"
         >
           <Flame className="h-4 w-4" />
         </Button>
@@ -89,6 +120,7 @@ export function TacticalBoard({ matchId, className }: TacticalBoardProps) {
           size="sm"
           className="h-8 px-2"
           onClick={toggleVoronoi}
+          title="Toggle Voronoi"
         >
           <Grid3X3 className="h-4 w-4" />
         </Button>
@@ -163,39 +195,32 @@ export function TacticalBoard({ matchId, className }: TacticalBoardProps) {
           />
         </g>
 
-        {/* Heatmap layer placeholder */}
-        {showHeatmap && (
-          <g className="heatmap-layer" opacity={0.4}>
-            {/* Simplified gradient heatmap */}
-            <defs>
-              <linearGradient id="heatmapGradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
-                <stop offset="50%" stopColor="#ffffff" stopOpacity="0.2" />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity="0.8" />
-              </linearGradient>
-            </defs>
-            <rect
-              x="0"
-              y="0"
-              width="105"
-              height="68"
-              fill="url(#heatmapGradient)"
-            />
+        {/* Heatmap layer */}
+        {showHeatmap && players.length > 0 && (
+          <g className="heatmap-layer" opacity={0.3}>
+            {players.map((player) => (
+              <circle
+                key={`heat-${player.player_id}`}
+                cx={player.x}
+                cy={player.y}
+                r={10}
+                fill={player.team === "home" ? "#3b82f6" : "#ef4444"}
+                opacity={0.3}
+              />
+            ))}
           </g>
         )}
 
-        {/* Voronoi layer placeholder */}
-        {showVoronoi && (
-          <g className="voronoi-layer" opacity={0.2}>
-            {/* Simplified voronoi representation */}
+        {/* Voronoi layer */}
+        {showVoronoi && players.length > 0 && (
+          <g className="voronoi-layer" opacity={0.15}>
             {players.map((player) => (
               <circle
                 key={`voronoi-${player.player_id}`}
                 cx={player.x}
                 cy={player.y}
-                r={8}
+                r={12}
                 fill={player.team === "home" ? "#3b82f6" : "#ef4444"}
-                opacity={0.3}
               />
             ))}
           </g>
@@ -232,21 +257,25 @@ export function TacticalBoard({ matchId, className }: TacticalBoardProps) {
             ))}
 
             {/* Ball */}
-            <circle
-              cx={ball.x}
-              cy={ball.y}
-              r={1}
-              fill="#fbbf24"
-              stroke="white"
-              strokeWidth="0.2"
-            />
+            {ball && (
+              <circle
+                cx={ball.x}
+                cy={ball.y}
+                r={1}
+                fill="#fbbf24"
+                stroke="white"
+                strokeWidth="0.2"
+              />
+            )}
           </g>
         )}
       </svg>
 
       {/* Frame indicator */}
-      <div className="absolute bottom-2 left-2 text-xs text-muted-foreground bg-black/50 px-2 py-1 rounded">
-        Frame: {currentFrame}
+      <div className="absolute bottom-2 left-2 text-xs text-muted-foreground bg-black/50 px-2 py-1 rounded flex items-center gap-2">
+        <span>Frame: {currentFrame}</span>
+        <span>|</span>
+        <span>Players: {players.length}</span>
       </div>
     </div>
   );

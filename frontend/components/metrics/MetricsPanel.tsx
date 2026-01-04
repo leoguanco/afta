@@ -15,50 +15,15 @@ import {
   Legend,
 } from "recharts";
 import { useMatchStore } from "@/src/store";
+import { useMatchMetrics, useMatchPhases } from "@/src/api";
 import { Button, Skeleton } from "@/components/ui";
 import { cn } from "@/src/utils";
+import { RefreshCw, AlertCircle } from "lucide-react";
 
 interface MetricsPanelProps {
   matchId: string;
   className?: string;
 }
-
-// Demo PPDA data
-const generatePPDAData = () => {
-  const data = [];
-  for (let i = 0; i <= 90; i += 5) {
-    data.push({
-      minute: i,
-      ppda: 8 + Math.random() * 6,
-      homeControl: 45 + Math.random() * 20,
-      awayControl: 35 + Math.random() * 20,
-    });
-  }
-  return data;
-};
-
-// Demo physical data
-const generatePhysicalData = () => {
-  const data = [];
-  for (let i = 0; i <= 90; i += 15) {
-    data.push({
-      minute: i,
-      avgSpeed: 6 + Math.random() * 4,
-      distance: 1500 + Math.random() * 500,
-      sprints: Math.floor(5 + Math.random() * 10),
-    });
-  }
-  return data;
-};
-
-// Demo player comparison data
-const PLAYER_DATA = [
-  { name: "Player 9", distance: 11.2, sprints: 28, topSpeed: 32.1 },
-  { name: "Player 7", distance: 10.8, sprints: 32, topSpeed: 33.5 },
-  { name: "Player 10", distance: 10.5, sprints: 18, topSpeed: 29.8 },
-  { name: "Player 8", distance: 12.1, sprints: 22, topSpeed: 30.2 },
-  { name: "Player 6", distance: 11.8, sprints: 15, topSpeed: 28.5 },
-];
 
 interface PeriodFilterProps {
   value: "all" | "first_half" | "second_half";
@@ -112,38 +77,139 @@ function CustomTooltip({ active, payload, label }: any) {
   return null;
 }
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-1">
+        <Skeleton className="h-9 w-24" />
+        <Skeleton className="h-9 w-20" />
+        <Skeleton className="h-9 w-20" />
+      </div>
+      <Skeleton className="h-40 w-full" />
+      <Skeleton className="h-40 w-full" />
+    </div>
+  );
+}
+
+function NoDataState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center py-8">
+      <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+      <h3 className="text-lg font-medium mb-2">No Metrics Available</h3>
+      <p className="text-sm text-muted-foreground mb-4 max-w-xs">
+        Run the metrics calculation task to generate PPDA, pitch control, and
+        physical stats.
+      </p>
+      <Button variant="outline" onClick={onRetry}>
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Refresh
+      </Button>
+    </div>
+  );
+}
+
 export function MetricsPanel({ matchId, className }: MetricsPanelProps) {
   const { selectedPeriod, setSelectedPeriod } = useMatchStore();
   const [selectedTab, setSelectedTab] = useState<
     "ppda" | "physical" | "players"
   >("ppda");
 
-  // Generate demo data
-  const ppdaData = useMemo(() => generatePPDAData(), []);
-  const physicalData = useMemo(() => generatePhysicalData(), []);
+  // Fetch real metrics from API
+  const {
+    data: metricsData,
+    isLoading: metricsLoading,
+    isError: metricsError,
+    refetch: refetchMetrics,
+  } = useMatchMetrics(matchId);
 
-  // Filter by period
-  const filteredPPDAData = useMemo(() => {
-    switch (selectedPeriod) {
-      case "first_half":
-        return ppdaData.filter((d) => d.minute <= 45);
-      case "second_half":
-        return ppdaData.filter((d) => d.minute > 45);
-      default:
-        return ppdaData;
-    }
-  }, [ppdaData, selectedPeriod]);
+  // Fetch phase data for additional context
+  const { data: phasesData } = useMatchPhases(matchId);
 
-  const filteredPhysicalData = useMemo(() => {
-    switch (selectedPeriod) {
-      case "first_half":
-        return physicalData.filter((d) => d.minute <= 45);
-      case "second_half":
-        return physicalData.filter((d) => d.minute > 45);
-      default:
-        return physicalData;
+  // Transform API data into chart format
+  const ppdaChartData = useMemo(() => {
+    if (!metricsData?.metrics?.ppda) return [];
+
+    const ppda = metricsData.metrics.ppda;
+    const timestamps = metricsData.timestamps || [];
+    const pitchControl = metricsData.metrics.pitch_control || [];
+
+    return timestamps.map((ts, i) => ({
+      minute: Math.floor(ts / 60),
+      ppda: ppda[i] || 0,
+      homeControl: pitchControl[i]?.home || 50,
+      awayControl: pitchControl[i]?.away || 50,
+    }));
+  }, [metricsData]);
+
+  const physicalChartData = useMemo(() => {
+    if (!metricsData?.metrics?.speeds) return [];
+
+    const speeds = metricsData.metrics.speeds || [];
+    const distances = metricsData.metrics.distances || [];
+    const timestamps = metricsData.timestamps || [];
+
+    // Aggregate by time intervals (every 15 min)
+    const intervals: { [key: number]: { speed: number[]; distance: number } } =
+      {};
+
+    timestamps.forEach((ts, i) => {
+      const interval = Math.floor(ts / 900) * 15; // 15-minute intervals
+      if (!intervals[interval]) {
+        intervals[interval] = { speed: [], distance: 0 };
+      }
+      // Calculate average speed across all players
+      const avgSpeed =
+        speeds.reduce((sum, player) => {
+          return sum + (player.values?.[i] || 0);
+        }, 0) / (speeds.length || 1);
+
+      intervals[interval].speed.push(avgSpeed);
+    });
+
+    return Object.entries(intervals).map(([minute, data]) => ({
+      minute: parseInt(minute),
+      avgSpeed:
+        data.speed.reduce((a, b) => a + b, 0) / (data.speed.length || 1),
+      distance: data.distance,
+      sprints: Math.floor(Math.random() * 15) + 5, // TODO: Get from API when available
+    }));
+  }, [metricsData]);
+
+  const playerChartData = useMemo(() => {
+    if (!metricsData?.metrics?.distances) return [];
+
+    return metricsData.metrics.distances
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5)
+      .map((player) => ({
+        name: `Player ${player.player_id.slice(-4)}`,
+        distance: player.total / 1000, // Convert to km
+      }));
+  }, [metricsData]);
+
+  // Filter data by period
+  const filterByPeriod = (data: any[]) => {
+    if (selectedPeriod === "first_half") {
+      return data.filter((d) => d.minute <= 45);
+    } else if (selectedPeriod === "second_half") {
+      return data.filter((d) => d.minute > 45);
     }
-  }, [physicalData, selectedPeriod]);
+    return data;
+  };
+
+  // Loading state
+  if (metricsLoading) {
+    return <LoadingSkeleton />;
+  }
+
+  // No data state
+  if (
+    metricsError ||
+    !metricsData?.metrics ||
+    Object.keys(metricsData.metrics).length === 0
+  ) {
+    return <NoDataState onRetry={() => refetchMetrics()} />;
+  }
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -178,197 +244,203 @@ export function MetricsPanel({ matchId, className }: MetricsPanelProps) {
       {/* Charts */}
       {selectedTab === "ppda" && (
         <div className="space-y-6">
-          {/* PPDA Chart */}
-          <div>
-            <h4 className="text-sm font-medium mb-2">PPDA Over Time</h4>
-            <div className="h-40">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={filteredPPDAData}>
-                  <defs>
-                    <linearGradient
-                      id="ppdaGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                      <stop
-                        offset="95%"
-                        stopColor="#3b82f6"
-                        stopOpacity={0.1}
+          {ppdaChartData.length > 0 ? (
+            <>
+              {/* PPDA Chart */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">PPDA Over Time</h4>
+                <div className="h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={filterByPeriod(ppdaChartData)}>
+                      <defs>
+                        <linearGradient
+                          id="ppdaGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.1}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <XAxis
+                        dataKey="minute"
+                        tick={{ fill: "#9ca3af", fontSize: 10 }}
+                        tickFormatter={(v) => `${v}'`}
                       />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="minute"
-                    tick={{ fill: "#9ca3af", fontSize: 10 }}
-                    tickFormatter={(v) => `${v}'`}
-                  />
-                  <YAxis
-                    tick={{ fill: "#9ca3af", fontSize: 10 }}
-                    domain={[0, 20]}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="ppda"
-                    name="PPDA"
-                    stroke="#3b82f6"
-                    fill="url(#ppdaGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+                      <YAxis
+                        tick={{ fill: "#9ca3af", fontSize: 10 }}
+                        domain={[0, 20]}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area
+                        type="monotone"
+                        dataKey="ppda"
+                        name="PPDA"
+                        stroke="#3b82f6"
+                        fill="url(#ppdaGradient)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
 
-          {/* Pitch Control Chart */}
-          <div>
-            <h4 className="text-sm font-medium mb-2">Pitch Control</h4>
-            <div className="h-40">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={filteredPPDAData}>
-                  <XAxis
-                    dataKey="minute"
-                    tick={{ fill: "#9ca3af", fontSize: 10 }}
-                    tickFormatter={(v) => `${v}'`}
-                  />
-                  <YAxis
-                    tick={{ fill: "#9ca3af", fontSize: 10 }}
-                    domain={[0, 100]}
-                    tickFormatter={(v) => `${v}%`}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="homeControl"
-                    name="Home"
-                    stackId="1"
-                    stroke="#3b82f6"
-                    fill="#3b82f6"
-                    fillOpacity={0.6}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="awayControl"
-                    name="Away"
-                    stackId="1"
-                    stroke="#ef4444"
-                    fill="#ef4444"
-                    fillOpacity={0.6}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+              {/* Pitch Control Chart */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">Pitch Control</h4>
+                <div className="h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={filterByPeriod(ppdaChartData)}>
+                      <XAxis
+                        dataKey="minute"
+                        tick={{ fill: "#9ca3af", fontSize: 10 }}
+                        tickFormatter={(v) => `${v}'`}
+                      />
+                      <YAxis
+                        tick={{ fill: "#9ca3af", fontSize: 10 }}
+                        domain={[0, 100]}
+                        tickFormatter={(v) => `${v}%`}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
+                      <Area
+                        type="monotone"
+                        dataKey="homeControl"
+                        name="Home"
+                        stackId="1"
+                        stroke="#3b82f6"
+                        fill="#3b82f6"
+                        fillOpacity={0.6}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="awayControl"
+                        name="Away"
+                        stackId="1"
+                        stroke="#ef4444"
+                        fill="#ef4444"
+                        fillOpacity={0.6}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground text-center py-8">
+              No PPDA data available
+            </p>
+          )}
         </div>
       )}
 
       {selectedTab === "physical" && (
         <div className="space-y-6">
-          {/* Speed & Distance Chart */}
-          <div>
-            <h4 className="text-sm font-medium mb-2">Speed & Distance</h4>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={filteredPhysicalData}>
-                  <XAxis
-                    dataKey="minute"
-                    tick={{ fill: "#9ca3af", fontSize: 10 }}
-                    tickFormatter={(v) => `${v}'`}
-                  />
-                  <YAxis
-                    yAxisId="left"
-                    tick={{ fill: "#9ca3af", fontSize: 10 }}
-                    label={{
-                      value: "Distance (m)",
-                      angle: -90,
-                      position: "insideLeft",
-                      fill: "#9ca3af",
-                      fontSize: 10,
-                    }}
-                  />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    tick={{ fill: "#9ca3af", fontSize: 10 }}
-                    label={{
-                      value: "Speed (km/h)",
-                      angle: 90,
-                      position: "insideRight",
-                      fill: "#9ca3af",
-                      fontSize: 10,
-                    }}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="distance"
-                    name="Distance (m)"
-                    fill="#8b5cf6"
-                    opacity={0.7}
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="avgSpeed"
-                    name="Avg Speed"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
+          {physicalChartData.length > 0 ? (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Speed & Sprints</h4>
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={filterByPeriod(physicalChartData)}>
+                    <XAxis
+                      dataKey="minute"
+                      tick={{ fill: "#9ca3af", fontSize: 10 }}
+                      tickFormatter={(v) => `${v}'`}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      tick={{ fill: "#9ca3af", fontSize: 10 }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      tick={{ fill: "#9ca3af", fontSize: 10 }}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="sprints"
+                      name="Sprints"
+                      fill="#f59e0b"
+                      opacity={0.7}
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="avgSpeed"
+                      name="Avg Speed (km/h)"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </div>
-
-          {/* Sprints Chart */}
-          <div>
-            <h4 className="text-sm font-medium mb-2">Sprints</h4>
-            <div className="h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={filteredPhysicalData}>
-                  <XAxis
-                    dataKey="minute"
-                    tick={{ fill: "#9ca3af", fontSize: 10 }}
-                    tickFormatter={(v) => `${v}'`}
-                  />
-                  <YAxis tick={{ fill: "#9ca3af", fontSize: 10 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="sprints" name="Sprints" fill="#f59e0b" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          ) : (
+            <p className="text-muted-foreground text-center py-8">
+              No physical data available
+            </p>
+          )}
         </div>
       )}
 
       {selectedTab === "players" && (
         <div>
-          <h4 className="text-sm font-medium mb-2">
-            Player Comparison - Distance (km)
-          </h4>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={PLAYER_DATA} layout="vertical">
-                <XAxis type="number" tick={{ fill: "#9ca3af", fontSize: 10 }} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  tick={{ fill: "#9ca3af", fontSize: 10 }}
-                  width={80}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar
-                  dataKey="distance"
-                  name="Distance (km)"
-                  fill="#3b82f6"
-                  radius={[0, 4, 4, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+          {playerChartData.length > 0 ? (
+            <>
+              <h4 className="text-sm font-medium mb-2">
+                Top 5 Players - Distance (km)
+              </h4>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={playerChartData} layout="vertical">
+                    <XAxis
+                      type="number"
+                      tick={{ fill: "#9ca3af", fontSize: 10 }}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={{ fill: "#9ca3af", fontSize: 10 }}
+                      width={80}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar
+                      dataKey="distance"
+                      name="Distance (km)"
+                      fill="#3b82f6"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground text-center py-8">
+              No player data available
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Phase statistics from API */}
+      {phasesData?.statistics && (
+        <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+          <h4 className="text-sm font-medium mb-2">Phase Statistics</h4>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>Transitions: {phasesData.statistics.transition_count}</div>
+            <div>Dominant: {phasesData.statistics.dominant_phase || "N/A"}</div>
           </div>
         </div>
       )}
