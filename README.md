@@ -67,19 +67,19 @@ afta/
 
 ## 🔌 API Endpoints
 
-| Endpoint                      | Method | Description                      |
-| ----------------------------- | ------ | -------------------------------- |
-| `/health`                     | GET    | Real DB/Redis connectivity check |
-| `/docs`                       | GET    | OpenAPI documentation            |
-| `/api/v1/ingest`              | POST   | Start match data ingestion       |
-| `/api/v1/process-video`       | POST   | Start video tracking (GPU)       |
-| `/api/v1/calculate-metrics`   | POST   | Calculate tactical metrics       |
-| `/api/v1/chat/analyze`        | POST   | Start AI analysis (CrewAI)       |
-| `/api/v1/lineups`             | POST   | Set player-track mappings 🆕     |
-| `/api/v1/lineups/{match_id}`  | GET    | Get lineup for match 🆕          |
-| `/api/v1/indexing/match/{id}` | POST   | Index match for RAG 🆕           |
-| `/api/v1/reports/generate`    | POST   | Generate tactical report         |
-| `/api/v1/patterns/detect`     | POST   | Detect tactical patterns         |
+| Endpoint                     | Method | Description                      |
+| ---------------------------- | ------ | -------------------------------- |
+| `/health`                    | GET    | Real DB/Redis connectivity check |
+| `/docs`                      | GET    | OpenAPI documentation            |
+| `/api/v1/ingest`             | POST   | Start match data ingestion       |
+| `/api/v1/process-video`      | POST   | Start video tracking (GPU)       |
+| `/api/v1/calculate-metrics`  | POST   | Calculate tactical metrics       |
+| `/api/v1/chat/analyze`       | POST   | Start AI analysis (CrewAI)       |
+| `/api/v1/lineups`            | POST   | Set player-track mappings 🆕     |
+| `/api/v1/lineups/{match_id}` | GET    | Get lineup for match 🆕          |
+| `/api/v1/index/{match_id}`   | POST   | Index match for RAG 🆕           |
+| `/api/v1/reports/generate`   | POST   | Generate tactical report         |
+| `/api/v1/patterns/detect`    | POST   | Detect tactical patterns         |
 
 ### Video Processing Options
 
