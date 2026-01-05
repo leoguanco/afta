@@ -163,3 +163,26 @@ class MinIOAdapter(ObjectStoragePort):
         except Exception as e:
             logger.error(f"Failed to retrieve object from MinIO: {e}")
             raise
+
+    def get_tracking_data(self, match_id: str) -> list:
+        """
+        Retrieve tracking data for a match as a list of dicts.
+        
+        Args:
+            match_id: Match identifier.
+            
+        Returns:
+            List of frame data dictionaries.
+        """
+        try:
+            tracking_key = f"tracking/{match_id}.parquet"
+            df = self.get_parquet(tracking_key)
+            return df.to_dict(orient="records")
+        except S3Error as e:
+            if e.code == "NoSuchKey":
+                logger.warning(f"No tracking data found for match: {match_id}")
+                return []
+            raise
+        except Exception as e:
+            logger.error(f"Failed to retrieve tracking data for {match_id}: {e}")
+            return []

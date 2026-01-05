@@ -90,11 +90,11 @@ async def get_tracking_data(
     Returns player positions for each frame in the specified range.
     Use sample_rate to skip frames (e.g., sample_rate=5 returns every 5th frame).
     """
-    from src.infrastructure.storage.minio_adapter import MinIOObjectStorage
+    from src.infrastructure.storage.minio_adapter import MinIOAdapter
     import json
     
     try:
-        storage = MinIOObjectStorage()
+        storage = MinIOAdapter()
         tracking_data = storage.get_tracking_data(match_id)
         
         if not tracking_data:

@@ -301,27 +301,43 @@ async def stream_video(match_id: str):
         # Initialize MinIO client with video bucket
         storage = MinIOAdapter(bucket="videos")
         
-        # Video is stored at matches/{match_id}/output.mp4 after processing
-        video_key = f"matches/{match_id}/output.mp4"
+        # Check multiple possible locations for the video:
+        # 1. Processed video: matches/{match_id}/output.mp4
+        # 2. Uploaded video: uploads/{match_id}.mp4
+        possible_keys = [
+            f"matches/{match_id}/output.mp4",  # Processed output
+            f"uploads/{match_id}.mp4",          # Original upload
+            f"uploads/{match_id}.mov",          # Other formats
+            f"uploads/{match_id}.avi",
+            f"uploads/{match_id}.mkv",
+        ]
         
-        try:
-            # Check if object exists by trying to stat it
-            stat = storage.client.stat_object(storage.bucket, video_key)
-            content_length = stat.size
-            content_type = stat.content_type or "video/mp4"
-            
-        except S3Error as e:
-            if e.code == "NoSuchKey" or e.code == "NoSuchBucket":
-                return JSONResponse(
-                    status_code=404,
-                    content={
-                        "detail": "Video not found",
-                        "message": f"No processed video exists for match '{match_id}'.",
-                        "match_id": match_id,
-                        "hint": "Process a video first using POST /api/v1/process-video"
-                    }
-                )
-            raise
+        video_key = None
+        stat = None
+        
+        for key in possible_keys:
+            try:
+                stat = storage.client.stat_object(storage.bucket, key)
+                video_key = key
+                logger.info(f"Found video at: {key}")
+                break
+            except S3Error:
+                continue
+        
+        if not video_key or not stat:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "detail": "Video not found",
+                    "message": f"No video exists for match '{match_id}'.",
+                    "match_id": match_id,
+                    "checked_paths": possible_keys,
+                    "hint": "Upload a video first using POST /api/v1/video/upload"
+                }
+            )
+        
+        content_length = stat.size
+        content_type = stat.content_type or "video/mp4"
         
         # Stream the video file
         def generate():
