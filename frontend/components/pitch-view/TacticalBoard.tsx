@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useMatchStore } from "@/src/store";
-import { useTrackingData } from "@/src/api";
+import { useTrackingBuffer } from "@/src/hooks/useTrackingBuffer";
 import { Button, Skeleton } from "@/components/ui";
 import { Users, Flame, Grid3X3, RefreshCw } from "lucide-react";
 import { cn } from "@/src/utils";
@@ -23,19 +23,11 @@ export function TacticalBoard({ matchId, className }: TacticalBoardProps) {
     currentFrame,
   } = useMatchStore();
 
-  // Fetch real tracking data from API
-  const {
-    data: trackingData,
-    isLoading,
-    isError,
-    refetch,
-  } = useTrackingData(matchId, currentFrame, currentFrame + 1);
-
-  // Get current frame data
-  const frameData = useMemo(() => {
-    if (!trackingData || trackingData.length === 0) return null;
-    return trackingData[0];
-  }, [trackingData]);
+  // Use buffered data fetching for performance (fetches 500 frames at a time)
+  const { frameData, isLoading, isError, refetch } = useTrackingBuffer(
+    matchId,
+    currentFrame
+  );
 
   // Extract players and ball from frame data
   const players = useMemo(() => {
